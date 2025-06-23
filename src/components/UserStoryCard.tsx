@@ -1,9 +1,8 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit2, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Edit2, Trash2, ChevronDown, ChevronUp, GripVertical } from 'lucide-react';
 import { UserStory } from '@/pages/Index';
 import { AcceptanceCriteriaCard } from './AcceptanceCriteriaCard';
 import { AddAcceptanceCriteriaDialog } from './AddAcceptanceCriteriaDialog';
@@ -13,12 +12,14 @@ interface UserStoryCardProps {
   userStory: UserStory;
   onUpdate: (userStory: UserStory) => void;
   onDelete: (storyId: string) => void;
+  onReorder?: (draggedId: string, targetId: string) => void;
 }
 
-export const UserStoryCard = ({ userStory, onUpdate, onDelete }: UserStoryCardProps) => {
+export const UserStoryCard = ({ userStory, onUpdate, onDelete, onReorder }: UserStoryCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isAddCriteriaOpen, setIsAddCriteriaOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
 
   const addAcceptanceCriteria = (given: string, when: string, then: string) => {
     const newCriteria = {
@@ -58,24 +59,58 @@ export const UserStoryCard = ({ userStory, onUpdate, onDelete }: UserStoryCardPr
     });
   };
 
+  const handleDragStart = (e: React.DragEvent) => {
+    e.dataTransfer.setData('text/plain', userStory.id);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const draggedId = e.dataTransfer.getData('text/plain');
+    if (draggedId !== userStory.id && onReorder) {
+      onReorder(draggedId, userStory.id);
+    }
+  };
+
   return (
-    <Card className="border border-green-200 bg-green-50">
+    <Card 
+      className={`border border-green-200 bg-green-50 ${isDragOver ? 'ring-2 ring-green-400' : ''}`}
+      draggable
+      onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
-              <Badge variant="secondary" className="bg-green-100 text-green-800 text-xs">
-                USER STORY
-              </Badge>
-              <Badge variant="outline" className="border-green-300 text-green-700 text-xs">
-                {userStory.acceptanceCriteria.length} AC
-              </Badge>
+          <div className="flex items-start gap-2 flex-1">
+            <GripVertical className="h-4 w-4 text-green-400 mt-1 cursor-grab active:cursor-grabbing" />
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <Badge variant="secondary" className="bg-green-100 text-green-800 text-xs">
+                  USER STORY
+                </Badge>
+                <Badge variant="outline" className="border-green-300 text-green-700 text-xs">
+                  {userStory.acceptanceCriteria.length} AC
+                </Badge>
+              </div>
+              <p className="text-sm text-green-900 font-medium">
+                As a <span className="font-semibold text-green-800">{userStory.user}</span>, 
+                I want to <span className="font-semibold text-green-800">{userStory.action}</span>, 
+                so that <span className="font-semibold text-green-800">{userStory.result}</span>
+              </p>
             </div>
-            <p className="text-sm text-green-900 font-medium">
-              As a <span className="font-semibold text-green-800">{userStory.user}</span>, 
-              I want to <span className="font-semibold text-green-800">{userStory.action}</span>, 
-              so that <span className="font-semibold text-green-800">{userStory.result}</span>
-            </p>
           </div>
           <div className="flex items-center gap-1">
             <Button

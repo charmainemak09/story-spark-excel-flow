@@ -55,6 +55,22 @@ export const ThemeCard = ({ theme, onUpdate, onDelete }: ThemeCardProps) => {
     });
   };
 
+  const handleEpicReorder = (draggedEpicId: string, targetEpicId: string) => {
+    const epics = [...theme.epics];
+    const draggedIndex = epics.findIndex(e => e.id === draggedEpicId);
+    const targetIndex = epics.findIndex(e => e.id === targetEpicId);
+    
+    if (draggedIndex !== -1 && targetIndex !== -1) {
+      const [draggedEpic] = epics.splice(draggedIndex, 1);
+      epics.splice(targetIndex, 0, draggedEpic);
+      
+      onUpdate({
+        ...theme,
+        epics
+      });
+    }
+  };
+
   const totalUserStories = theme.epics.reduce((total, epic) => total + epic.userStories.length, 0);
 
   return (
@@ -137,6 +153,7 @@ export const ThemeCard = ({ theme, onUpdate, onDelete }: ThemeCardProps) => {
                   epic={epic}
                   onUpdate={updateEpic}
                   onDelete={deleteEpic}
+                  onReorder={handleEpicReorder}
                 />
               ))}
             </div>
