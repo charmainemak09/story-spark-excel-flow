@@ -29,39 +29,39 @@ export const AddAcceptanceCriteriaDialog = ({ open, onOpenChange, onAdd }: AddAc
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Add Acceptance Criteria</DialogTitle>
           <DialogDescription>
-            Create new acceptance criteria following the "Given {setting}, When {action}, Then {result}" format.
+            Define acceptance criteria using the format: Given {given}, When {when}, Then {then}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="given">Given...</Label>
+            <Label htmlFor="given">Given (setting/context)</Label>
             <Input
               id="given"
-              placeholder="e.g., user is on the login page"
+              placeholder="user is on the login page"
               value={given}
               onChange={(e) => setGiven(e.target.value)}
               required
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="when">When...</Label>
+            <Label htmlFor="when">When (action)</Label>
             <Input
               id="when"
-              placeholder="e.g., they enter valid credentials"
+              placeholder="they enter valid credentials"
               value={when}
               onChange={(e) => setWhen(e.target.value)}
               required
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="then">Then...</Label>
+            <Label htmlFor="then">Then (result)</Label>
             <Input
               id="then"
-              placeholder="e.g., they are redirected to the dashboard"
+              placeholder="they should be redirected to dashboard"
               value={then}
               onChange={(e) => setThen(e.target.value)}
               required
@@ -71,7 +71,7 @@ export const AddAcceptanceCriteriaDialog = ({ open, onOpenChange, onAdd }: AddAc
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+            <Button type="submit" className="bg-green-600 hover:bg-green-700">
               Add Criteria
             </Button>
           </div>

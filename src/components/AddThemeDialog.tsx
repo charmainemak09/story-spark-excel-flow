@@ -14,14 +14,18 @@ interface AddThemeDialogProps {
 
 export const AddThemeDialog = ({ open, onOpenChange, onAdd }: AddThemeDialogProps) => {
   const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
+  const [problemToSolve, setProblemToSolve] = useState('');
+  const [projectObjective, setProjectObjective] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (title.trim()) {
-      onAdd(title.trim(), description.trim());
+      // Combine both fields into description with clear separation
+      const description = `Problem: ${problemToSolve.trim()}\n\nObjective: ${projectObjective.trim()}`;
+      onAdd(title.trim(), description);
       setTitle('');
-      setDescription('');
+      setProblemToSolve('');
+      setProjectObjective('');
       onOpenChange(false);
     }
   };
@@ -47,12 +51,22 @@ export const AddThemeDialog = ({ open, onOpenChange, onAdd }: AddThemeDialogProp
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="problemToSolve">Problem Trying to Solve</Label>
             <Textarea
-              id="description"
-              placeholder="Enter theme description..."
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              id="problemToSolve"
+              placeholder="Describe the problem this theme addresses..."
+              value={problemToSolve}
+              onChange={(e) => setProblemToSolve(e.target.value)}
+              rows={3}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="projectObjective">Project Objective</Label>
+            <Textarea
+              id="projectObjective"
+              placeholder="Describe the objective or goal of this theme..."
+              value={projectObjective}
+              onChange={(e) => setProjectObjective(e.target.value)}
               rows={3}
             />
           </div>
