@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -50,11 +49,10 @@ export const EpicCard = ({ epic, onUpdate, onDelete }: EpicCardProps) => {
     });
   };
 
-  const updateEpic = (title: string, description: string) => {
+  const updateEpic = (title: string) => {
     onUpdate({
       ...epic,
-      title,
-      description
+      title
     });
   };
 
@@ -69,7 +67,6 @@ export const EpicCard = ({ epic, onUpdate, onDelete }: EpicCardProps) => {
                 {epic.userStories.length} User Stor{epic.userStories.length !== 1 ? 'ies' : 'y'}
               </Badge>
             </div>
-            <CardDescription className="text-purple-700">{epic.description}</CardDescription>
           </div>
           <div className="flex items-center gap-2">
             <Button

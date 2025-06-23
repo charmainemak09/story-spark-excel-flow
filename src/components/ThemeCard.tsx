@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,11 +19,10 @@ export const ThemeCard = ({ theme, onUpdate, onDelete }: ThemeCardProps) => {
   const [isAddEpicOpen, setIsAddEpicOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
 
-  const addEpic = (title: string, description: string) => {
+  const addEpic = (title: string) => {
     const newEpic = {
       id: Date.now().toString(),
       title,
-      description,
       userStories: []
     };
     onUpdate({

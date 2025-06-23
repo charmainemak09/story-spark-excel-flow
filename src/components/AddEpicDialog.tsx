@@ -3,25 +3,22 @@ import { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 
 interface AddEpicDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAdd: (title: string, description: string) => void;
+  onAdd: (title: string) => void;
 }
 
 export const AddEpicDialog = ({ open, onOpenChange, onAdd }: AddEpicDialogProps) => {
   const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (title.trim()) {
-      onAdd(title.trim(), description.trim());
+      onAdd(title.trim());
       setTitle('');
-      setDescription('');
       onOpenChange(false);
     }
   };
@@ -30,7 +27,7 @@ export const AddEpicDialog = ({ open, onOpenChange, onAdd }: AddEpicDialogProps)
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Add New Epic</DialogTitle>
+          <DialogTitle>Add Epic</DialogTitle>
           <DialogDescription>
             Create a new epic to organize your user stories.
           </DialogDescription>
@@ -44,16 +41,6 @@ export const AddEpicDialog = ({ open, onOpenChange, onAdd }: AddEpicDialogProps)
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              placeholder="Enter epic description..."
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={3}
             />
           </div>
           <div className="flex justify-end space-x-2">
