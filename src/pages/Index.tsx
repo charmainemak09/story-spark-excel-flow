@@ -6,6 +6,7 @@ import { ThemeCard } from '@/components/ThemeCard';
 import { AddThemeDialog } from '@/components/AddThemeDialog';
 import { ExportButton } from '@/components/ExportButton';
 import { useToast } from '@/hooks/use-toast';
+import { AuthenticatedLayout } from '@/components/AuthenticatedLayout';
 
 export interface AcceptanceCriteria {
   id: string;
@@ -71,7 +72,7 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <AuthenticatedLayout>
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -130,7 +131,7 @@ const Index = () => {
           onAdd={addTheme}
         />
       </div>
-    </div>
+    </AuthenticatedLayout>
   );
 };
 
