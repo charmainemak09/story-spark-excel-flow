@@ -29,15 +29,27 @@ const Auth = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!email || !password) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill in all required fields.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
       if (isLogin) {
+        console.log('Attempting sign in with:', email);
         const { error } = await signIn(email, password);
         if (error) {
+          console.error('Sign in error:', error);
           toast({
             title: "Sign in failed",
-            description: error.message,
+            description: error.message || "Invalid email or password. Please try again.",
             variant: "destructive",
           });
         } else {
@@ -48,11 +60,13 @@ const Auth = () => {
           navigate('/');
         }
       } else {
+        console.log('Attempting sign up with:', email, username, fullName);
         const { error } = await signUp(email, password, username, fullName);
         if (error) {
+          console.error('Sign up error:', error);
           toast({
             title: "Sign up failed",
-            description: error.message,
+            description: error.message || "Failed to create account. Please try again.",
             variant: "destructive",
           });
         } else {
@@ -63,6 +77,7 @@ const Auth = () => {
         }
       }
     } catch (error) {
+      console.error('Auth error:', error);
       toast({
         title: "An error occurred",
         description: "Please try again later.",
