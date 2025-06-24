@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Edit2, Trash2 } from 'lucide-react';
-import { AcceptanceCriteria } from '@/pages/Index';
+import { AcceptanceCriteria } from '@/types/userStory';
 import { EditAcceptanceCriteriaDialog } from './EditAcceptanceCriteriaDialog';
 
 interface AcceptanceCriteriaCardProps {

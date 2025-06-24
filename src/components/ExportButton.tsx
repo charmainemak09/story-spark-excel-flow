@@ -1,7 +1,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
-import { Theme } from '@/pages/Index';
+import { Theme } from '@/types/userStory';
 import { useToast } from '@/hooks/use-toast';
 
 interface ExportButtonProps {

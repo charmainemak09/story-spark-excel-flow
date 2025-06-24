@@ -1,9 +1,10 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Edit2, Trash2, ChevronDown, ChevronUp, GripVertical } from 'lucide-react';
-import { UserStory } from '@/pages/Index';
+import { UserStory } from '@/types/userStory';
 import { AcceptanceCriteriaCard } from './AcceptanceCriteriaCard';
 import { AddAcceptanceCriteriaDialog } from './AddAcceptanceCriteriaDialog';
 import { EditUserStoryDialog } from './EditUserStoryDialog';

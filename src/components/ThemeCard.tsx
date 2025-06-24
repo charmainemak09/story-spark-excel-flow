@@ -1,9 +1,10 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Edit2, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
-import { Theme } from '@/pages/Index';
+import { Theme } from '@/types/userStory';
 import { EpicCard } from './EpicCard';
 import { AddEpicDialog } from './AddEpicDialog';
 import { EditThemeDialog } from './EditThemeDialog';
