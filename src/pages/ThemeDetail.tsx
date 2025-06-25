@@ -2,15 +2,16 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { AuthenticatedLayout } from "@/components/AuthenticatedLayout";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Plus } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useThemes } from "@/hooks/useThemes";
+import { useEpics } from "@/hooks/useEpics";
 import { ThemeCard } from "@/components/ThemeCard";
-import { useState } from "react";
 
 const ThemeDetail = () => {
   const { themeId } = useParams<{ themeId: string }>();
   const navigate = useNavigate();
   const { themes, isLoading, updateTheme, deleteTheme } = useThemes();
+  const { createEpic, updateEpic, deleteEpic } = useEpics();
   
   const theme = themes.find(t => t.id === themeId);
 
@@ -43,8 +44,6 @@ const ThemeDetail = () => {
   }
 
   const handleUpdateTheme = (updatedTheme: any) => {
-    // For now, we'll handle theme updates at the theme level
-    // Epic/story updates will be handled separately
     updateTheme({ 
       id: updatedTheme.id, 
       title: updatedTheme.title, 
@@ -56,6 +55,22 @@ const ThemeDetail = () => {
     if (confirm("Are you sure you want to delete this theme?")) {
       deleteTheme(themeId);
       navigate('/themes');
+    }
+  };
+
+  const handleAddEpic = (title: string) => {
+    if (themeId) {
+      createEpic({ themeId, title });
+    }
+  };
+
+  const handleUpdateEpic = (epicId: string, title: string) => {
+    updateEpic({ id: epicId, title });
+  };
+
+  const handleDeleteEpic = (epicId: string) => {
+    if (confirm("Are you sure you want to delete this epic?")) {
+      deleteEpic(epicId);
     }
   };
 
@@ -83,6 +98,9 @@ const ThemeDetail = () => {
           theme={theme}
           onUpdate={handleUpdateTheme}
           onDelete={handleDeleteTheme}
+          onAddEpic={handleAddEpic}
+          onUpdateEpic={handleUpdateEpic}
+          onDeleteEpic={handleDeleteEpic}
         />
       </div>
     </AuthenticatedLayout>

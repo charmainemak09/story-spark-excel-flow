@@ -13,39 +13,64 @@ interface ThemeCardProps {
   theme: Theme;
   onUpdate: (theme: Theme) => void;
   onDelete: (themeId: string) => void;
+  onAddEpic?: (title: string) => void;
+  onUpdateEpic?: (epicId: string, title: string) => void;
+  onDeleteEpic?: (epicId: string) => void;
 }
 
-export const ThemeCard = ({ theme, onUpdate, onDelete }: ThemeCardProps) => {
+export const ThemeCard = ({ 
+  theme, 
+  onUpdate, 
+  onDelete, 
+  onAddEpic,
+  onUpdateEpic,
+  onDeleteEpic 
+}: ThemeCardProps) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const [isAddEpicOpen, setIsAddEpicOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
 
   const addEpic = (title: string) => {
-    const newEpic = {
-      id: Date.now().toString(),
-      title,
-      userStories: []
-    };
-    onUpdate({
-      ...theme,
-      epics: [...theme.epics, newEpic]
-    });
+    if (onAddEpic) {
+      onAddEpic(title);
+    } else {
+      // Fallback to local state update if no database handler provided
+      const newEpic = {
+        id: Date.now().toString(),
+        title,
+        userStories: []
+      };
+      onUpdate({
+        ...theme,
+        epics: [...theme.epics, newEpic]
+      });
+    }
   };
 
   const updateEpic = (updatedEpic: any) => {
-    onUpdate({
-      ...theme,
-      epics: theme.epics.map(epic => 
-        epic.id === updatedEpic.id ? updatedEpic : epic
-      )
-    });
+    if (onUpdateEpic) {
+      onUpdateEpic(updatedEpic.id, updatedEpic.title);
+    } else {
+      // Fallback to local state update
+      onUpdate({
+        ...theme,
+        epics: theme.epics.map(epic => 
+          epic.id === updatedEpic.id ? updatedEpic : epic
+        )
+      });
+    }
   };
 
   const deleteEpic = (epicId: string) => {
-    onUpdate({
-      ...theme,
-      epics: theme.epics.filter(epic => epic.id !== epicId)
-    });
+    if (onDeleteEpic) {
+      onDeleteEpic(epicId);
+    } else {
+      // Fallback to local state update
+      onUpdate({
+        ...theme,
+        epics: theme.epics.filter(epic => epic.id !== epicId)
+      });
+    }
   };
 
   const updateTheme = (title: string, description: string) => {
