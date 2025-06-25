@@ -9,6 +9,76 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      acceptance_criteria: {
+        Row: {
+          created_at: string
+          given_condition: string
+          id: string
+          then_result: string
+          updated_at: string
+          user_story_id: string
+          when_action: string
+        }
+        Insert: {
+          created_at?: string
+          given_condition: string
+          id?: string
+          then_result: string
+          updated_at?: string
+          user_story_id: string
+          when_action: string
+        }
+        Update: {
+          created_at?: string
+          given_condition?: string
+          id?: string
+          then_result?: string
+          updated_at?: string
+          user_story_id?: string
+          when_action?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acceptance_criteria_user_story_id_fkey"
+            columns: ["user_story_id"]
+            isOneToOne: false
+            referencedRelation: "user_stories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      epics: {
+        Row: {
+          created_at: string
+          id: string
+          theme_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          theme_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          theme_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "epics_theme_id_fkey"
+            columns: ["theme_id"]
+            isOneToOne: false
+            referencedRelation: "themes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -36,6 +106,33 @@ export type Database = {
         }
         Relationships: []
       }
+      themes: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       User: {
         Row: {
           created_at: string
@@ -53,6 +150,44 @@ export type Database = {
           username?: string | null
         }
         Relationships: []
+      }
+      user_stories: {
+        Row: {
+          action: string
+          created_at: string
+          epic_id: string
+          id: string
+          result: string
+          updated_at: string
+          user_role: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          epic_id: string
+          id?: string
+          result: string
+          updated_at?: string
+          user_role: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          epic_id?: string
+          id?: string
+          result?: string
+          updated_at?: string
+          user_role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_stories_epic_id_fkey"
+            columns: ["epic_id"]
+            isOneToOne: false
+            referencedRelation: "epics"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
