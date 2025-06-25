@@ -8,6 +8,7 @@ import { useEpics } from "@/hooks/useEpics";
 import { useUserStories } from "@/hooks/useUserStories";
 import { useAcceptanceCriteria } from "@/hooks/useAcceptanceCriteria";
 import { ThemeCard } from "@/components/ThemeCard";
+import { ExportButton } from "@/components/ExportButton";
 
 const ThemeDetail = () => {
   const { themeId } = useParams<{ themeId: string }>();
@@ -124,6 +125,7 @@ const ThemeDetail = () => {
               <p className="text-gray-600">{theme.description}</p>
             </div>
           </div>
+          <ExportButton themes={[theme]} />
         </div>
 
         <ThemeCard
