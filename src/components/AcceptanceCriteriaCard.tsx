@@ -10,18 +10,38 @@ interface AcceptanceCriteriaCardProps {
   criteria: AcceptanceCriteria;
   onUpdate: (criteria: AcceptanceCriteria) => void;
   onDelete: (criteriaId: string) => void;
+  onUpdateAcceptanceCriteria?: (criteriaId: string, given: string, when: string, then: string) => void;
+  onDeleteAcceptanceCriteria?: (criteriaId: string) => void;
 }
 
-export const AcceptanceCriteriaCard = ({ criteria, onUpdate, onDelete }: AcceptanceCriteriaCardProps) => {
+export const AcceptanceCriteriaCard = ({ 
+  criteria, 
+  onUpdate, 
+  onDelete,
+  onUpdateAcceptanceCriteria,
+  onDeleteAcceptanceCriteria
+}: AcceptanceCriteriaCardProps) => {
   const [isEditOpen, setIsEditOpen] = useState(false);
 
   const updateCriteria = (given: string, when: string, then: string) => {
-    onUpdate({
-      ...criteria,
-      given,
-      when,
-      then
-    });
+    if (onUpdateAcceptanceCriteria) {
+      onUpdateAcceptanceCriteria(criteria.id, given, when, then);
+    } else {
+      onUpdate({
+        ...criteria,
+        given,
+        when,
+        then
+      });
+    }
+  };
+
+  const deleteCriteria = () => {
+    if (onDeleteAcceptanceCriteria) {
+      onDeleteAcceptanceCriteria(criteria.id);
+    } else {
+      onDelete(criteria.id);
+    }
   };
 
   return (
@@ -29,7 +49,7 @@ export const AcceptanceCriteriaCard = ({ criteria, onUpdate, onDelete }: Accepta
       <CardContent className="p-3">
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <p className="text-xs text-gray-800">
+            <p className="text-xs text-gray-800 whitespace-pre-wrap">
               <span className="font-semibold text-blue-600">Given</span> {criteria.given}, 
               <span className="font-semibold text-orange-600"> When</span> {criteria.when}, 
               <span className="font-semibold text-green-600"> Then</span> {criteria.then}
@@ -47,7 +67,7 @@ export const AcceptanceCriteriaCard = ({ criteria, onUpdate, onDelete }: Accepta
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => onDelete(criteria.id)}
+              onClick={deleteCriteria}
               className="text-red-500 hover:text-red-700 hover:bg-red-100 h-6 w-6 p-0"
             >
               <Trash2 className="h-3 w-3" />

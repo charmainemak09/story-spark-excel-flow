@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useThemes } from "@/hooks/useThemes";
 import { useEpics } from "@/hooks/useEpics";
+import { useUserStories } from "@/hooks/useUserStories";
+import { useAcceptanceCriteria } from "@/hooks/useAcceptanceCriteria";
 import { ThemeCard } from "@/components/ThemeCard";
 
 const ThemeDetail = () => {
@@ -12,6 +14,8 @@ const ThemeDetail = () => {
   const navigate = useNavigate();
   const { themes, isLoading, updateTheme, deleteTheme } = useThemes();
   const { createEpic, updateEpic, deleteEpic } = useEpics();
+  const { createUserStory, updateUserStory, deleteUserStory } = useUserStories();
+  const { createAcceptanceCriteria, updateAcceptanceCriteria, deleteAcceptanceCriteria } = useAcceptanceCriteria();
   
   const theme = themes.find(t => t.id === themeId);
 
@@ -74,6 +78,34 @@ const ThemeDetail = () => {
     }
   };
 
+  const handleAddUserStory = (epicId: string, user: string, action: string, result: string) => {
+    createUserStory({ epicId, user, action, result });
+  };
+
+  const handleUpdateUserStory = (storyId: string, user: string, action: string, result: string) => {
+    updateUserStory({ id: storyId, user, action, result });
+  };
+
+  const handleDeleteUserStory = (storyId: string) => {
+    if (confirm("Are you sure you want to delete this user story?")) {
+      deleteUserStory(storyId);
+    }
+  };
+
+  const handleAddAcceptanceCriteria = (userStoryId: string, given: string, when: string, then: string) => {
+    createAcceptanceCriteria({ userStoryId, given, when, then });
+  };
+
+  const handleUpdateAcceptanceCriteria = (criteriaId: string, given: string, when: string, then: string) => {
+    updateAcceptanceCriteria({ id: criteriaId, given, when, then });
+  };
+
+  const handleDeleteAcceptanceCriteria = (criteriaId: string) => {
+    if (confirm("Are you sure you want to delete this acceptance criteria?")) {
+      deleteAcceptanceCriteria(criteriaId);
+    }
+  };
+
   return (
     <AuthenticatedLayout>
       <div className="container mx-auto px-4 py-8">
@@ -101,6 +133,12 @@ const ThemeDetail = () => {
           onAddEpic={handleAddEpic}
           onUpdateEpic={handleUpdateEpic}
           onDeleteEpic={handleDeleteEpic}
+          onAddUserStory={handleAddUserStory}
+          onUpdateUserStory={handleUpdateUserStory}
+          onDeleteUserStory={handleDeleteUserStory}
+          onAddAcceptanceCriteria={handleAddAcceptanceCriteria}
+          onUpdateAcceptanceCriteria={handleUpdateAcceptanceCriteria}
+          onDeleteAcceptanceCriteria={handleDeleteAcceptanceCriteria}
         />
       </div>
     </AuthenticatedLayout>

@@ -16,6 +16,12 @@ interface ThemeCardProps {
   onAddEpic?: (title: string) => void;
   onUpdateEpic?: (epicId: string, title: string) => void;
   onDeleteEpic?: (epicId: string) => void;
+  onAddUserStory?: (epicId: string, user: string, action: string, result: string) => void;
+  onUpdateUserStory?: (storyId: string, user: string, action: string, result: string) => void;
+  onDeleteUserStory?: (storyId: string) => void;
+  onAddAcceptanceCriteria?: (userStoryId: string, given: string, when: string, then: string) => void;
+  onUpdateAcceptanceCriteria?: (criteriaId: string, given: string, when: string, then: string) => void;
+  onDeleteAcceptanceCriteria?: (criteriaId: string) => void;
 }
 
 export const ThemeCard = ({ 
@@ -24,7 +30,13 @@ export const ThemeCard = ({
   onDelete, 
   onAddEpic,
   onUpdateEpic,
-  onDeleteEpic 
+  onDeleteEpic,
+  onAddUserStory,
+  onUpdateUserStory,
+  onDeleteUserStory,
+  onAddAcceptanceCriteria,
+  onUpdateAcceptanceCriteria,
+  onDeleteAcceptanceCriteria
 }: ThemeCardProps) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const [isAddEpicOpen, setIsAddEpicOpen] = useState(false);
@@ -113,7 +125,7 @@ export const ThemeCard = ({
                 {totalUserStories} User Stor{totalUserStories !== 1 ? 'ies' : 'y'}
               </Badge>
             </div>
-            <CardDescription className="text-blue-700">{theme.description}</CardDescription>
+            <CardDescription className="text-blue-700 whitespace-pre-wrap">{theme.description}</CardDescription>
           </div>
           <div className="flex items-center gap-2">
             <Button
@@ -180,6 +192,12 @@ export const ThemeCard = ({
                   onUpdate={updateEpic}
                   onDelete={deleteEpic}
                   onReorder={handleEpicReorder}
+                  onAddUserStory={onAddUserStory}
+                  onUpdateUserStory={onUpdateUserStory}
+                  onDeleteUserStory={onDeleteUserStory}
+                  onAddAcceptanceCriteria={onAddAcceptanceCriteria}
+                  onUpdateAcceptanceCriteria={onUpdateAcceptanceCriteria}
+                  onDeleteAcceptanceCriteria={onDeleteAcceptanceCriteria}
                 />
               ))}
             </div>

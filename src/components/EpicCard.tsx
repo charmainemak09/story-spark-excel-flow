@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,42 +13,71 @@ interface EpicCardProps {
   onUpdate: (epic: Epic) => void;
   onDelete: (epicId: string) => void;
   onReorder?: (draggedId: string, targetId: string) => void;
+  onAddUserStory?: (epicId: string, user: string, action: string, result: string) => void;
+  onUpdateUserStory?: (storyId: string, user: string, action: string, result: string) => void;
+  onDeleteUserStory?: (storyId: string) => void;
+  onAddAcceptanceCriteria?: (userStoryId: string, given: string, when: string, then: string) => void;
+  onUpdateAcceptanceCriteria?: (criteriaId: string, given: string, when: string, then: string) => void;
+  onDeleteAcceptanceCriteria?: (criteriaId: string) => void;
 }
 
-export const EpicCard = ({ epic, onUpdate, onDelete, onReorder }: EpicCardProps) => {
+export const EpicCard = ({ 
+  epic, 
+  onUpdate, 
+  onDelete, 
+  onReorder,
+  onAddUserStory,
+  onUpdateUserStory,
+  onDeleteUserStory,
+  onAddAcceptanceCriteria,
+  onUpdateAcceptanceCriteria,
+  onDeleteAcceptanceCriteria
+}: EpicCardProps) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const [isAddStoryOpen, setIsAddStoryOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
 
   const addUserStory = (user: string, action: string, result: string) => {
-    const newUserStory = {
-      id: Date.now().toString(),
-      user,
-      action,
-      result,
-      acceptanceCriteria: []
-    };
-    onUpdate({
-      ...epic,
-      userStories: [...epic.userStories, newUserStory]
-    });
+    if (onAddUserStory) {
+      onAddUserStory(epic.id, user, action, result);
+    } else {
+      const newUserStory = {
+        id: Date.now().toString(),
+        user,
+        action,
+        result,
+        acceptanceCriteria: []
+      };
+      onUpdate({
+        ...epic,
+        userStories: [...epic.userStories, newUserStory]
+      });
+    }
   };
 
   const updateUserStory = (updatedUserStory: any) => {
-    onUpdate({
-      ...epic,
-      userStories: epic.userStories.map(story => 
-        story.id === updatedUserStory.id ? updatedUserStory : story
-      )
-    });
+    if (onUpdateUserStory) {
+      onUpdateUserStory(updatedUserStory.id, updatedUserStory.user, updatedUserStory.action, updatedUserStory.result);
+    } else {
+      onUpdate({
+        ...epic,
+        userStories: epic.userStories.map(story => 
+          story.id === updatedUserStory.id ? updatedUserStory : story
+        )
+      });
+    }
   };
 
   const deleteUserStory = (storyId: string) => {
-    onUpdate({
-      ...epic,
-      userStories: epic.userStories.filter(story => story.id !== storyId)
-    });
+    if (onDeleteUserStory) {
+      onDeleteUserStory(storyId);
+    } else {
+      onUpdate({
+        ...epic,
+        userStories: epic.userStories.filter(story => story.id !== storyId)
+      });
+    }
   };
 
   const updateEpic = (title: string) => {
@@ -187,6 +215,9 @@ export const EpicCard = ({ epic, onUpdate, onDelete, onReorder }: EpicCardProps)
                   onUpdate={updateUserStory}
                   onDelete={deleteUserStory}
                   onReorder={handleUserStoryReorder}
+                  onAddAcceptanceCriteria={onAddAcceptanceCriteria}
+                  onUpdateAcceptanceCriteria={onUpdateAcceptanceCriteria}
+                  onDeleteAcceptanceCriteria={onDeleteAcceptanceCriteria}
                 />
               ))}
             </div>

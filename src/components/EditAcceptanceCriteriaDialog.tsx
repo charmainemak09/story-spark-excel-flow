@@ -1,7 +1,8 @@
+
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { AcceptanceCriteria } from '@/types/userStory';
 
@@ -39,38 +40,41 @@ export const EditAcceptanceCriteriaDialog = ({ open, onOpenChange, criteria, onU
         <DialogHeader>
           <DialogTitle>Edit Acceptance Criteria</DialogTitle>
           <DialogDescription>
-            Update acceptance criteria using the format: Given {given}, When {when}, Then {then}
+            Update acceptance criteria using the format: Given {'{given}'}, When {'{when}'}, Then {'{then}'}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="given">Given (setting/context)</Label>
-            <Input
+            <Textarea
               id="given"
               placeholder="user is on the login page"
               value={given}
               onChange={(e) => setGiven(e.target.value)}
               required
+              rows={2}
             />
           </div>
           <div className="space-y-2">
             <Label htmlFor="when">When (action)</Label>
-            <Input
+            <Textarea
               id="when"
               placeholder="they enter valid credentials"
               value={when}
               onChange={(e) => setWhen(e.target.value)}
               required
+              rows={2}
             />
           </div>
           <div className="space-y-2">
             <Label htmlFor="then">Then (result)</Label>
-            <Input
+            <Textarea
               id="then"
               placeholder="they should be redirected to dashboard"
               value={then}
               onChange={(e) => setThen(e.target.value)}
               required
+              rows={2}
             />
           </div>
           <div className="flex justify-end space-x-2">

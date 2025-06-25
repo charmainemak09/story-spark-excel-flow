@@ -1,7 +1,8 @@
+
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { UserStory } from '@/types/userStory';
 
@@ -39,38 +40,41 @@ export const EditUserStoryDialog = ({ open, onOpenChange, userStory, onUpdate }:
         <DialogHeader>
           <DialogTitle>Edit User Story</DialogTitle>
           <DialogDescription>
-            Update the user story following the "As a {user}, I want to {action}, so that {result}" format.
+            Update the user story following the "As a {'{user}'}, I want to {'{action}'}, so that {'{result}'}" format.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="user">As a...</Label>
-            <Input
+            <Textarea
               id="user"
               placeholder="e.g., customer, admin, user"
               value={user}
               onChange={(e) => setUser(e.target.value)}
               required
+              rows={2}
             />
           </div>
           <div className="space-y-2">
             <Label htmlFor="action">I want to...</Label>
-            <Input
+            <Textarea
               id="action"
               placeholder="e.g., view my order history"
               value={action}
               onChange={(e) => setAction(e.target.value)}
               required
+              rows={3}
             />
           </div>
           <div className="space-y-2">
             <Label htmlFor="result">So that...</Label>
-            <Input
+            <Textarea
               id="result"
               placeholder="e.g., I can track my purchases"
               value={result}
               onChange={(e) => setResult(e.target.value)}
               required
+              rows={3}
             />
           </div>
           <div className="flex justify-end space-x-2">

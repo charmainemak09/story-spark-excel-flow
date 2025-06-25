@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,41 +13,64 @@ interface UserStoryCardProps {
   onUpdate: (userStory: UserStory) => void;
   onDelete: (storyId: string) => void;
   onReorder?: (draggedId: string, targetId: string) => void;
+  onAddAcceptanceCriteria?: (userStoryId: string, given: string, when: string, then: string) => void;
+  onUpdateAcceptanceCriteria?: (criteriaId: string, given: string, when: string, then: string) => void;
+  onDeleteAcceptanceCriteria?: (criteriaId: string) => void;
 }
 
-export const UserStoryCard = ({ userStory, onUpdate, onDelete, onReorder }: UserStoryCardProps) => {
+export const UserStoryCard = ({ 
+  userStory, 
+  onUpdate, 
+  onDelete, 
+  onReorder,
+  onAddAcceptanceCriteria,
+  onUpdateAcceptanceCriteria,
+  onDeleteAcceptanceCriteria
+}: UserStoryCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isAddCriteriaOpen, setIsAddCriteriaOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
 
   const addAcceptanceCriteria = (given: string, when: string, then: string) => {
-    const newCriteria = {
-      id: Date.now().toString(),
-      given,
-      when,
-      then
-    };
-    onUpdate({
-      ...userStory,
-      acceptanceCriteria: [...userStory.acceptanceCriteria, newCriteria]
-    });
+    if (onAddAcceptanceCriteria) {
+      onAddAcceptanceCriteria(userStory.id, given, when, then);
+    } else {
+      const newCriteria = {
+        id: Date.now().toString(),
+        given,
+        when,
+        then
+      };
+      onUpdate({
+        ...userStory,
+        acceptanceCriteria: [...userStory.acceptanceCriteria, newCriteria]
+      });
+    }
   };
 
   const updateAcceptanceCriteria = (updatedCriteria: any) => {
-    onUpdate({
-      ...userStory,
-      acceptanceCriteria: userStory.acceptanceCriteria.map(criteria => 
-        criteria.id === updatedCriteria.id ? updatedCriteria : criteria
-      )
-    });
+    if (onUpdateAcceptanceCriteria) {
+      onUpdateAcceptanceCriteria(updatedCriteria.id, updatedCriteria.given, updatedCriteria.when, updatedCriteria.then);
+    } else {
+      onUpdate({
+        ...userStory,
+        acceptanceCriteria: userStory.acceptanceCriteria.map(criteria => 
+          criteria.id === updatedCriteria.id ? updatedCriteria : criteria
+        )
+      });
+    }
   };
 
   const deleteAcceptanceCriteria = (criteriaId: string) => {
-    onUpdate({
-      ...userStory,
-      acceptanceCriteria: userStory.acceptanceCriteria.filter(criteria => criteria.id !== criteriaId)
-    });
+    if (onDeleteAcceptanceCriteria) {
+      onDeleteAcceptanceCriteria(criteriaId);
+    } else {
+      onUpdate({
+        ...userStory,
+        acceptanceCriteria: userStory.acceptanceCriteria.filter(criteria => criteria.id !== criteriaId)
+      });
+    }
   };
 
   const updateUserStory = (user: string, action: string, result: string) => {
@@ -106,7 +128,7 @@ export const UserStoryCard = ({ userStory, onUpdate, onDelete, onReorder }: User
                   {userStory.acceptanceCriteria.length} AC
                 </Badge>
               </div>
-              <p className="text-sm text-green-900 font-medium">
+              <p className="text-sm text-green-900 font-medium whitespace-pre-wrap">
                 As a <span className="font-semibold text-green-800">{userStory.user}</span>, 
                 I want to <span className="font-semibold text-green-800">{userStory.action}</span>, 
                 so that <span className="font-semibold text-green-800">{userStory.result}</span>
@@ -178,6 +200,8 @@ export const UserStoryCard = ({ userStory, onUpdate, onDelete, onReorder }: User
                   criteria={criteria}
                   onUpdate={updateAcceptanceCriteria}
                   onDelete={deleteAcceptanceCriteria}
+                  onUpdateAcceptanceCriteria={onUpdateAcceptanceCriteria}
+                  onDeleteAcceptanceCriteria={onDeleteAcceptanceCriteria}
                 />
               ))}
             </div>
