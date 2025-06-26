@@ -52,13 +52,22 @@ export const AcceptanceCriteriaCard = ({
     e.dataTransfer.setData('text/plain', criteria.id);
     e.dataTransfer.setData('application/x-criteria-id', criteria.id);
     e.dataTransfer.effectAllowed = 'move';
+    
+    // Add dragging class to the element
+    const target = e.currentTarget as HTMLElement;
+    target.style.opacity = '0.5';
+  };
+
+  const handleDragEnd = (e: React.DragEvent) => {
+    const target = e.currentTarget as HTMLElement;
+    target.style.opacity = '1';
   };
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    
     const draggedId = e.dataTransfer.getData('text/plain') || e.dataTransfer.getData('application/x-criteria-id');
-    console.log('AcceptanceCriteriaCard: Drag over', { draggedId, targetId: criteria.id });
     if (draggedId && draggedId !== criteria.id) {
       e.dataTransfer.dropEffect = 'move';
       setIsDragOver(true);
@@ -71,13 +80,11 @@ export const AcceptanceCriteriaCard = ({
   };
 
   const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const rect = e.currentTarget.getBoundingClientRect();
+    // Only set drag over to false if we're actually leaving the card
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     const x = e.clientX;
     const y = e.clientY;
     
-    // Check if we're really leaving the element
     if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
       setIsDragOver(false);
     }
@@ -98,11 +105,12 @@ export const AcceptanceCriteriaCard = ({
 
   return (
     <Card 
-      className={`border border-gray-200 bg-white transition-all duration-200 cursor-move ${
+      className={`border border-gray-200 bg-white transition-all duration-200 ${
         isDragOver ? 'ring-2 ring-blue-400 shadow-md transform scale-105' : ''
       }`}
       draggable
       onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
       onDragOver={handleDragOver}
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
@@ -111,7 +119,9 @@ export const AcceptanceCriteriaCard = ({
       <CardContent className="p-3">
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-2 flex-1">
-            <GripVertical className="h-3 w-3 text-gray-400 mt-1 cursor-grab active:cursor-grabbing flex-shrink-0" />
+            <div className="cursor-grab active:cursor-grabbing flex-shrink-0 pt-1">
+              <GripVertical className="h-3 w-3 text-gray-400" />
+            </div>
             <div className="flex-1">
               <p className="text-xs text-gray-800 whitespace-pre-wrap">
                 <span className="font-semibold text-blue-600">Given</span> {criteria.given}, 

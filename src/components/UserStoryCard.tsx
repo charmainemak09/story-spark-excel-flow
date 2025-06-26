@@ -88,13 +88,22 @@ export const UserStoryCard = ({
     e.dataTransfer.setData('text/plain', userStory.id);
     e.dataTransfer.setData('application/x-story-id', userStory.id);
     e.dataTransfer.effectAllowed = 'move';
+    
+    // Add visual feedback for dragging
+    const target = e.currentTarget as HTMLElement;
+    target.style.opacity = '0.5';
+  };
+
+  const handleDragEnd = (e: React.DragEvent) => {
+    const target = e.currentTarget as HTMLElement;
+    target.style.opacity = '1';
   };
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    
     const draggedId = e.dataTransfer.getData('text/plain') || e.dataTransfer.getData('application/x-story-id');
-    console.log('UserStoryCard: Drag over', { draggedId, targetId: userStory.id });
     if (draggedId && draggedId !== userStory.id) {
       e.dataTransfer.dropEffect = 'move';
       setIsDragOver(true);
@@ -107,13 +116,10 @@ export const UserStoryCard = ({
   };
 
   const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const rect = e.currentTarget.getBoundingClientRect();
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     const x = e.clientX;
     const y = e.clientY;
     
-    // Check if we're really leaving the element
     if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
       setIsDragOver(false);
     }
@@ -151,11 +157,12 @@ export const UserStoryCard = ({
 
   return (
     <Card 
-      className={`border border-green-200 bg-green-50 transition-all duration-200 cursor-move ${
+      className={`border border-green-200 bg-green-50 transition-all duration-200 ${
         isDragOver ? 'ring-2 ring-green-400 shadow-md transform scale-105' : ''
       }`}
       draggable
       onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
       onDragOver={handleDragOver}
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
@@ -164,7 +171,9 @@ export const UserStoryCard = ({
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-2 flex-1">
-            <GripVertical className="h-4 w-4 text-green-400 mt-1 cursor-grab active:cursor-grabbing" />
+            <div className="cursor-grab active:cursor-grabbing flex-shrink-0 pt-1">
+              <GripVertical className="h-4 w-4 text-green-400" />
+            </div>
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
                 <Badge variant="secondary" className="bg-green-100 text-green-800 text-xs">

@@ -93,13 +93,22 @@ export const EpicCard = ({
     e.dataTransfer.setData('text/plain', epic.id);
     e.dataTransfer.setData('application/x-epic-id', epic.id);
     e.dataTransfer.effectAllowed = 'move';
+    
+    // Add visual feedback for dragging
+    const target = e.currentTarget as HTMLElement;
+    target.style.opacity = '0.5';
+  };
+
+  const handleDragEnd = (e: React.DragEvent) => {
+    const target = e.currentTarget as HTMLElement;
+    target.style.opacity = '1';
   };
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    
     const draggedId = e.dataTransfer.getData('text/plain') || e.dataTransfer.getData('application/x-epic-id');
-    console.log('EpicCard: Drag over', { draggedId, targetId: epic.id });
     if (draggedId && draggedId !== epic.id) {
       e.dataTransfer.dropEffect = 'move';
       setIsDragOver(true);
@@ -112,13 +121,10 @@ export const EpicCard = ({
   };
 
   const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const rect = e.currentTarget.getBoundingClientRect();
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     const x = e.clientX;
     const y = e.clientY;
     
-    // Check if we're really leaving the element
     if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
       setIsDragOver(false);
     }
@@ -156,11 +162,12 @@ export const EpicCard = ({
 
   return (
     <Card 
-      className={`border border-purple-200 bg-purple-50 transition-all duration-200 cursor-move ${
+      className={`border border-purple-200 bg-purple-50 transition-all duration-200 ${
         isDragOver ? 'ring-2 ring-purple-400 shadow-md transform scale-105' : ''
       }`}
       draggable
       onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
       onDragOver={handleDragOver}
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
@@ -169,7 +176,9 @@ export const EpicCard = ({
       <CardHeader className="pb-4">
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-2 flex-1">
-            <GripVertical className="h-5 w-5 text-purple-400 mt-1 cursor-grab active:cursor-grabbing" />
+            <div className="cursor-grab active:cursor-grabbing flex-shrink-0 pt-1">
+              <GripVertical className="h-5 w-5 text-purple-400" />
+            </div>
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
                 <CardTitle className="text-lg text-purple-900">{epic.title}</CardTitle>
