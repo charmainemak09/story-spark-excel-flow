@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Edit2, Trash2 } from 'lucide-react';
+import { Edit2, Trash2, GripVertical } from 'lucide-react';
 import { AcceptanceCriteria } from '@/types/userStory';
 import { EditAcceptanceCriteriaDialog } from './EditAcceptanceCriteriaDialog';
 
@@ -12,6 +12,7 @@ interface AcceptanceCriteriaCardProps {
   onDelete: (criteriaId: string) => void;
   onUpdateAcceptanceCriteria?: (criteriaId: string, given: string, when: string, then: string) => void;
   onDeleteAcceptanceCriteria?: (criteriaId: string) => void;
+  onReorder?: (draggedId: string, targetId: string) => void;
 }
 
 export const AcceptanceCriteriaCard = ({ 
@@ -19,9 +20,11 @@ export const AcceptanceCriteriaCard = ({
   onUpdate, 
   onDelete,
   onUpdateAcceptanceCriteria,
-  onDeleteAcceptanceCriteria
+  onDeleteAcceptanceCriteria,
+  onReorder
 }: AcceptanceCriteriaCardProps) => {
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
 
   const updateCriteria = (given: string, when: string, then: string) => {
     if (onUpdateAcceptanceCriteria) {
@@ -44,16 +47,50 @@ export const AcceptanceCriteriaCard = ({
     }
   };
 
+  const handleDragStart = (e: React.DragEvent) => {
+    e.dataTransfer.setData('text/plain', criteria.id);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const draggedId = e.dataTransfer.getData('text/plain');
+    if (draggedId !== criteria.id && onReorder) {
+      onReorder(draggedId, criteria.id);
+    }
+  };
+
   return (
-    <Card className="border border-gray-200 bg-white">
+    <Card 
+      className={`border border-gray-200 bg-white ${isDragOver ? 'ring-2 ring-blue-400' : ''}`}
+      draggable
+      onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       <CardContent className="p-3">
         <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <p className="text-xs text-gray-800 whitespace-pre-wrap">
-              <span className="font-semibold text-blue-600">Given</span> {criteria.given}, 
-              <span className="font-semibold text-orange-600"> When</span> {criteria.when}, 
-              <span className="font-semibold text-green-600"> Then</span> {criteria.then}
-            </p>
+          <div className="flex items-start gap-2 flex-1">
+            <GripVertical className="h-3 w-3 text-gray-400 mt-1 cursor-grab active:cursor-grabbing flex-shrink-0" />
+            <div className="flex-1">
+              <p className="text-xs text-gray-800 whitespace-pre-wrap">
+                <span className="font-semibold text-blue-600">Given</span> {criteria.given}, 
+                <span className="font-semibold text-orange-600"> When</span> {criteria.when}, 
+                <span className="font-semibold text-green-600"> Then</span> {criteria.then}
+              </p>
+            </div>
           </div>
           <div className="flex items-center gap-1 ml-2">
             <Button

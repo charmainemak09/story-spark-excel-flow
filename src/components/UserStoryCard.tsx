@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -106,6 +107,22 @@ export const UserStoryCard = ({
     }
   };
 
+  const handleAcceptanceCriteriaReorder = (draggedCriteriaId: string, targetCriteriaId: string) => {
+    const criteria = [...userStory.acceptanceCriteria];
+    const draggedIndex = criteria.findIndex(c => c.id === draggedCriteriaId);
+    const targetIndex = criteria.findIndex(c => c.id === targetCriteriaId);
+    
+    if (draggedIndex !== -1 && targetIndex !== -1) {
+      const [draggedCriteria] = criteria.splice(draggedIndex, 1);
+      criteria.splice(targetIndex, 0, draggedCriteria);
+      
+      onUpdate({
+        ...userStory,
+        acceptanceCriteria: criteria
+      });
+    }
+  };
+
   return (
     <Card 
       className={`border border-green-200 bg-green-50 ${isDragOver ? 'ring-2 ring-green-400' : ''}`}
@@ -202,6 +219,7 @@ export const UserStoryCard = ({
                   onDelete={deleteAcceptanceCriteria}
                   onUpdateAcceptanceCriteria={onUpdateAcceptanceCriteria}
                   onDeleteAcceptanceCriteria={onDeleteAcceptanceCriteria}
+                  onReorder={handleAcceptanceCriteriaReorder}
                 />
               ))}
             </div>
