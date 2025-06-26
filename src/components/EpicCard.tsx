@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -89,24 +90,41 @@ export const EpicCard = ({
 
   const handleDragStart = (e: React.DragEvent) => {
     e.dataTransfer.setData('text/plain', epic.id);
+    e.dataTransfer.setData('application/x-epic-id', epic.id);
     e.dataTransfer.effectAllowed = 'move';
   };
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    setIsDragOver(true);
+    e.stopPropagation();
+    const draggedId = e.dataTransfer.getData('text/plain');
+    if (draggedId && draggedId !== epic.id) {
+      e.dataTransfer.dropEffect = 'move';
+      setIsDragOver(true);
+    }
   };
 
-  const handleDragLeave = () => {
-    setIsDragOver(false);
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Only hide drag over state if we're really leaving the element
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setIsDragOver(false);
+    }
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsDragOver(false);
+    
     const draggedId = e.dataTransfer.getData('text/plain');
-    if (draggedId !== epic.id && onReorder) {
+    if (draggedId && draggedId !== epic.id && onReorder) {
       onReorder(draggedId, epic.id);
     }
   };
@@ -129,10 +147,13 @@ export const EpicCard = ({
 
   return (
     <Card 
-      className={`border border-purple-200 bg-purple-50 ${isDragOver ? 'ring-2 ring-purple-400' : ''}`}
+      className={`border border-purple-200 bg-purple-50 transition-all duration-200 ${
+        isDragOver ? 'ring-2 ring-purple-400 shadow-md transform scale-105' : ''
+      }`}
       draggable
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
+      onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >

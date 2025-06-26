@@ -85,24 +85,41 @@ export const UserStoryCard = ({
 
   const handleDragStart = (e: React.DragEvent) => {
     e.dataTransfer.setData('text/plain', userStory.id);
+    e.dataTransfer.setData('application/x-story-id', userStory.id);
     e.dataTransfer.effectAllowed = 'move';
   };
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    setIsDragOver(true);
+    e.stopPropagation();
+    const draggedId = e.dataTransfer.getData('text/plain');
+    if (draggedId && draggedId !== userStory.id) {
+      e.dataTransfer.dropEffect = 'move';
+      setIsDragOver(true);
+    }
   };
 
-  const handleDragLeave = () => {
-    setIsDragOver(false);
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Only hide drag over state if we're really leaving the element
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setIsDragOver(false);
+    }
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsDragOver(false);
+    
     const draggedId = e.dataTransfer.getData('text/plain');
-    if (draggedId !== userStory.id && onReorder) {
+    if (draggedId && draggedId !== userStory.id && onReorder) {
       onReorder(draggedId, userStory.id);
     }
   };
@@ -125,10 +142,13 @@ export const UserStoryCard = ({
 
   return (
     <Card 
-      className={`border border-green-200 bg-green-50 ${isDragOver ? 'ring-2 ring-green-400' : ''}`}
+      className={`border border-green-200 bg-green-50 transition-all duration-200 ${
+        isDragOver ? 'ring-2 ring-green-400 shadow-md transform scale-105' : ''
+      }`}
       draggable
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
+      onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
