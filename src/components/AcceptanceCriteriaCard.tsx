@@ -48,6 +48,7 @@ export const AcceptanceCriteriaCard = ({
   };
 
   const handleDragStart = (e: React.DragEvent) => {
+    console.log('AcceptanceCriteriaCard: Drag start', criteria.id);
     e.dataTransfer.setData('text/plain', criteria.id);
     e.dataTransfer.setData('application/x-criteria-id', criteria.id);
     e.dataTransfer.effectAllowed = 'move';
@@ -56,7 +57,8 @@ export const AcceptanceCriteriaCard = ({
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    const draggedId = e.dataTransfer.getData('text/plain');
+    const draggedId = e.dataTransfer.getData('text/plain') || e.dataTransfer.getData('application/x-criteria-id');
+    console.log('AcceptanceCriteriaCard: Drag over', { draggedId, targetId: criteria.id });
     if (draggedId && draggedId !== criteria.id) {
       e.dataTransfer.dropEffect = 'move';
       setIsDragOver(true);
@@ -71,8 +73,12 @@ export const AcceptanceCriteriaCard = ({
   const handleDragLeave = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    // Only hide drag over state if we're really leaving the element
-    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX;
+    const y = e.clientY;
+    
+    // Check if we're really leaving the element
+    if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
       setIsDragOver(false);
     }
   };
@@ -82,7 +88,9 @@ export const AcceptanceCriteriaCard = ({
     e.stopPropagation();
     setIsDragOver(false);
     
-    const draggedId = e.dataTransfer.getData('text/plain');
+    const draggedId = e.dataTransfer.getData('text/plain') || e.dataTransfer.getData('application/x-criteria-id');
+    console.log('AcceptanceCriteriaCard: Drop', { draggedId, targetId: criteria.id });
+    
     if (draggedId && draggedId !== criteria.id && onReorder) {
       onReorder(draggedId, criteria.id);
     }
@@ -90,7 +98,7 @@ export const AcceptanceCriteriaCard = ({
 
   return (
     <Card 
-      className={`border border-gray-200 bg-white transition-all duration-200 ${
+      className={`border border-gray-200 bg-white transition-all duration-200 cursor-move ${
         isDragOver ? 'ring-2 ring-blue-400 shadow-md transform scale-105' : ''
       }`}
       draggable

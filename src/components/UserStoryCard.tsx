@@ -84,6 +84,7 @@ export const UserStoryCard = ({
   };
 
   const handleDragStart = (e: React.DragEvent) => {
+    console.log('UserStoryCard: Drag start', userStory.id);
     e.dataTransfer.setData('text/plain', userStory.id);
     e.dataTransfer.setData('application/x-story-id', userStory.id);
     e.dataTransfer.effectAllowed = 'move';
@@ -92,7 +93,8 @@ export const UserStoryCard = ({
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    const draggedId = e.dataTransfer.getData('text/plain');
+    const draggedId = e.dataTransfer.getData('text/plain') || e.dataTransfer.getData('application/x-story-id');
+    console.log('UserStoryCard: Drag over', { draggedId, targetId: userStory.id });
     if (draggedId && draggedId !== userStory.id) {
       e.dataTransfer.dropEffect = 'move';
       setIsDragOver(true);
@@ -107,8 +109,12 @@ export const UserStoryCard = ({
   const handleDragLeave = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    // Only hide drag over state if we're really leaving the element
-    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX;
+    const y = e.clientY;
+    
+    // Check if we're really leaving the element
+    if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
       setIsDragOver(false);
     }
   };
@@ -118,13 +124,16 @@ export const UserStoryCard = ({
     e.stopPropagation();
     setIsDragOver(false);
     
-    const draggedId = e.dataTransfer.getData('text/plain');
+    const draggedId = e.dataTransfer.getData('text/plain') || e.dataTransfer.getData('application/x-story-id');
+    console.log('UserStoryCard: Drop', { draggedId, targetId: userStory.id });
+    
     if (draggedId && draggedId !== userStory.id && onReorder) {
       onReorder(draggedId, userStory.id);
     }
   };
 
   const handleAcceptanceCriteriaReorder = (draggedCriteriaId: string, targetCriteriaId: string) => {
+    console.log('UserStoryCard: Reordering acceptance criteria', { draggedCriteriaId, targetCriteriaId });
     const criteria = [...userStory.acceptanceCriteria];
     const draggedIndex = criteria.findIndex(c => c.id === draggedCriteriaId);
     const targetIndex = criteria.findIndex(c => c.id === targetCriteriaId);
@@ -142,7 +151,7 @@ export const UserStoryCard = ({
 
   return (
     <Card 
-      className={`border border-green-200 bg-green-50 transition-all duration-200 ${
+      className={`border border-green-200 bg-green-50 transition-all duration-200 cursor-move ${
         isDragOver ? 'ring-2 ring-green-400 shadow-md transform scale-105' : ''
       }`}
       draggable

@@ -89,6 +89,7 @@ export const EpicCard = ({
   };
 
   const handleDragStart = (e: React.DragEvent) => {
+    console.log('EpicCard: Drag start', epic.id);
     e.dataTransfer.setData('text/plain', epic.id);
     e.dataTransfer.setData('application/x-epic-id', epic.id);
     e.dataTransfer.effectAllowed = 'move';
@@ -97,7 +98,8 @@ export const EpicCard = ({
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    const draggedId = e.dataTransfer.getData('text/plain');
+    const draggedId = e.dataTransfer.getData('text/plain') || e.dataTransfer.getData('application/x-epic-id');
+    console.log('EpicCard: Drag over', { draggedId, targetId: epic.id });
     if (draggedId && draggedId !== epic.id) {
       e.dataTransfer.dropEffect = 'move';
       setIsDragOver(true);
@@ -112,8 +114,12 @@ export const EpicCard = ({
   const handleDragLeave = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    // Only hide drag over state if we're really leaving the element
-    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX;
+    const y = e.clientY;
+    
+    // Check if we're really leaving the element
+    if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
       setIsDragOver(false);
     }
   };
@@ -123,13 +129,16 @@ export const EpicCard = ({
     e.stopPropagation();
     setIsDragOver(false);
     
-    const draggedId = e.dataTransfer.getData('text/plain');
+    const draggedId = e.dataTransfer.getData('text/plain') || e.dataTransfer.getData('application/x-epic-id');
+    console.log('EpicCard: Drop', { draggedId, targetId: epic.id });
+    
     if (draggedId && draggedId !== epic.id && onReorder) {
       onReorder(draggedId, epic.id);
     }
   };
 
   const handleUserStoryReorder = (draggedStoryId: string, targetStoryId: string) => {
+    console.log('EpicCard: Reordering user stories', { draggedStoryId, targetStoryId });
     const stories = [...epic.userStories];
     const draggedIndex = stories.findIndex(s => s.id === draggedStoryId);
     const targetIndex = stories.findIndex(s => s.id === targetStoryId);
@@ -147,7 +156,7 @@ export const EpicCard = ({
 
   return (
     <Card 
-      className={`border border-purple-200 bg-purple-50 transition-all duration-200 ${
+      className={`border border-purple-200 bg-purple-50 transition-all duration-200 cursor-move ${
         isDragOver ? 'ring-2 ring-purple-400 shadow-md transform scale-105' : ''
       }`}
       draggable
