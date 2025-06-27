@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,6 +7,7 @@ import { Epic } from '@/types/userStory';
 import { UserStoryCard } from './UserStoryCard';
 import { AddUserStoryDialog } from './AddUserStoryDialog';
 import { EditEpicDialog } from './EditEpicDialog';
+import { useUserStoryReorder } from '@/hooks/useUserStoryReorder';
 
 interface EpicCardProps {
   epic: Epic;
@@ -38,6 +38,7 @@ export const EpicCard = ({
   const [isAddStoryOpen, setIsAddStoryOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
+  const { reorderUserStories } = useUserStoryReorder();
 
   const addUserStory = (user: string, action: string, result: string) => {
     if (onAddUserStory) {
@@ -126,10 +127,15 @@ export const EpicCard = ({
       const [draggedStory] = stories.splice(draggedIndex, 1);
       stories.splice(targetIndex, 0, draggedStory);
       
+      // Update local state immediately
       onUpdate({
         ...epic,
         userStories: stories
       });
+
+      // Update database order
+      const storyIds = stories.map(story => story.id);
+      reorderUserStories({ epicId: epic.id, storyIds });
     }
   };
 

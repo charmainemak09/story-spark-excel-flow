@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,6 +7,7 @@ import { UserStory } from '@/types/userStory';
 import { AcceptanceCriteriaCard } from './AcceptanceCriteriaCard';
 import { AddAcceptanceCriteriaDialog } from './AddAcceptanceCriteriaDialog';
 import { EditUserStoryDialog } from './EditUserStoryDialog';
+import { useAcceptanceCriteriaReorder } from '@/hooks/useAcceptanceCriteriaReorder';
 
 interface UserStoryCardProps {
   userStory: UserStory;
@@ -32,6 +32,7 @@ export const UserStoryCard = ({
   const [isAddCriteriaOpen, setIsAddCriteriaOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
+  const { reorderCriteria } = useAcceptanceCriteriaReorder();
 
   const addAcceptanceCriteria = (given: string, when: string, then: string) => {
     if (onAddAcceptanceCriteria) {
@@ -121,10 +122,15 @@ export const UserStoryCard = ({
       const [draggedCriteria] = criteria.splice(draggedIndex, 1);
       criteria.splice(targetIndex, 0, draggedCriteria);
       
+      // Update local state immediately
       onUpdate({
         ...userStory,
         acceptanceCriteria: criteria
       });
+
+      // Update database order
+      const criteriaIds = criteria.map(c => c.id);
+      reorderCriteria({ userStoryId: userStory.id, criteriaIds });
     }
   };
 

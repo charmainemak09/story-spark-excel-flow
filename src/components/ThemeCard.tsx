@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,6 +7,7 @@ import { Theme } from '@/types/userStory';
 import { EpicCard } from './EpicCard';
 import { AddEpicDialog } from './AddEpicDialog';
 import { EditThemeDialog } from './EditThemeDialog';
+import { useEpicReorder } from '@/hooks/useEpicReorder';
 
 interface ThemeCardProps {
   theme: Theme;
@@ -41,12 +41,12 @@ export const ThemeCard = ({
   const [isExpanded, setIsExpanded] = useState(true);
   const [isAddEpicOpen, setIsAddEpicOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const { reorderEpics } = useEpicReorder();
 
   const addEpic = (title: string) => {
     if (onAddEpic) {
       onAddEpic(title);
     } else {
-      // Fallback to local state update if no database handler provided
       const newEpic = {
         id: Date.now().toString(),
         title,
@@ -63,7 +63,6 @@ export const ThemeCard = ({
     if (onUpdateEpic) {
       onUpdateEpic(updatedEpic.id, updatedEpic.title);
     } else {
-      // Fallback to local state update
       onUpdate({
         ...theme,
         epics: theme.epics.map(epic => 
@@ -77,7 +76,6 @@ export const ThemeCard = ({
     if (onDeleteEpic) {
       onDeleteEpic(epicId);
     } else {
-      // Fallback to local state update
       onUpdate({
         ...theme,
         epics: theme.epics.filter(epic => epic.id !== epicId)
@@ -102,10 +100,15 @@ export const ThemeCard = ({
       const [draggedEpic] = epics.splice(draggedIndex, 1);
       epics.splice(targetIndex, 0, draggedEpic);
       
+      // Update local state immediately for better UX
       onUpdate({
         ...theme,
         epics
       });
+
+      // Update database order
+      const epicIds = epics.map(epic => epic.id);
+      reorderEpics({ themeId: theme.id, epicIds });
     }
   };
 
