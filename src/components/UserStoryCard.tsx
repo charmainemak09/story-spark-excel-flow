@@ -84,62 +84,35 @@ export const UserStoryCard = ({
   };
 
   const handleDragStart = (e: React.DragEvent) => {
-    console.log('UserStoryCard: Drag start', userStory.id);
     e.dataTransfer.setData('text/plain', userStory.id);
-    e.dataTransfer.setData('application/x-story-id', userStory.id);
     e.dataTransfer.effectAllowed = 'move';
-    
-    // Add visual feedback for dragging
-    const target = e.currentTarget as HTMLElement;
-    target.style.opacity = '0.5';
-  };
-
-  const handleDragEnd = (e: React.DragEvent) => {
-    const target = e.currentTarget as HTMLElement;
-    target.style.opacity = '1';
   };
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
-    e.stopPropagation();
-    
-    const draggedId = e.dataTransfer.getData('text/plain') || e.dataTransfer.getData('application/x-story-id');
-    if (draggedId && draggedId !== userStory.id) {
-      e.dataTransfer.dropEffect = 'move';
-      setIsDragOver(true);
-    }
-  };
-
-  const handleDragEnter = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+    e.dataTransfer.dropEffect = 'move';
+    setIsDragOver(true);
   };
 
   const handleDragLeave = (e: React.DragEvent) => {
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    const x = e.clientX;
-    const y = e.clientY;
-    
-    if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    if (e.clientX < rect.left || e.clientX > rect.right || 
+        e.clientY < rect.top || e.clientY > rect.bottom) {
       setIsDragOver(false);
     }
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
-    e.stopPropagation();
     setIsDragOver(false);
     
-    const draggedId = e.dataTransfer.getData('text/plain') || e.dataTransfer.getData('application/x-story-id');
-    console.log('UserStoryCard: Drop', { draggedId, targetId: userStory.id });
-    
+    const draggedId = e.dataTransfer.getData('text/plain');
     if (draggedId && draggedId !== userStory.id && onReorder) {
       onReorder(draggedId, userStory.id);
     }
   };
 
   const handleAcceptanceCriteriaReorder = (draggedCriteriaId: string, targetCriteriaId: string) => {
-    console.log('UserStoryCard: Reordering acceptance criteria', { draggedCriteriaId, targetCriteriaId });
     const criteria = [...userStory.acceptanceCriteria];
     const draggedIndex = criteria.findIndex(c => c.id === draggedCriteriaId);
     const targetIndex = criteria.findIndex(c => c.id === targetCriteriaId);
@@ -158,13 +131,11 @@ export const UserStoryCard = ({
   return (
     <Card 
       className={`border border-green-200 bg-green-50 transition-all duration-200 ${
-        isDragOver ? 'ring-2 ring-green-400 shadow-md transform scale-105' : ''
+        isDragOver ? 'ring-2 ring-green-400 shadow-md' : ''
       }`}
       draggable
       onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
       onDragOver={handleDragOver}
-      onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >

@@ -48,56 +48,29 @@ export const AcceptanceCriteriaCard = ({
   };
 
   const handleDragStart = (e: React.DragEvent) => {
-    console.log('AcceptanceCriteriaCard: Drag start', criteria.id);
     e.dataTransfer.setData('text/plain', criteria.id);
-    e.dataTransfer.setData('application/x-criteria-id', criteria.id);
     e.dataTransfer.effectAllowed = 'move';
-    
-    // Add dragging class to the element
-    const target = e.currentTarget as HTMLElement;
-    target.style.opacity = '0.5';
-  };
-
-  const handleDragEnd = (e: React.DragEvent) => {
-    const target = e.currentTarget as HTMLElement;
-    target.style.opacity = '1';
   };
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
-    e.stopPropagation();
-    
-    const draggedId = e.dataTransfer.getData('text/plain') || e.dataTransfer.getData('application/x-criteria-id');
-    if (draggedId && draggedId !== criteria.id) {
-      e.dataTransfer.dropEffect = 'move';
-      setIsDragOver(true);
-    }
-  };
-
-  const handleDragEnter = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+    e.dataTransfer.dropEffect = 'move';
+    setIsDragOver(true);
   };
 
   const handleDragLeave = (e: React.DragEvent) => {
-    // Only set drag over to false if we're actually leaving the card
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    const x = e.clientX;
-    const y = e.clientY;
-    
-    if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    if (e.clientX < rect.left || e.clientX > rect.right || 
+        e.clientY < rect.top || e.clientY > rect.bottom) {
       setIsDragOver(false);
     }
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
-    e.stopPropagation();
     setIsDragOver(false);
     
-    const draggedId = e.dataTransfer.getData('text/plain') || e.dataTransfer.getData('application/x-criteria-id');
-    console.log('AcceptanceCriteriaCard: Drop', { draggedId, targetId: criteria.id });
-    
+    const draggedId = e.dataTransfer.getData('text/plain');
     if (draggedId && draggedId !== criteria.id && onReorder) {
       onReorder(draggedId, criteria.id);
     }
@@ -106,13 +79,11 @@ export const AcceptanceCriteriaCard = ({
   return (
     <Card 
       className={`border border-gray-200 bg-white transition-all duration-200 ${
-        isDragOver ? 'ring-2 ring-blue-400 shadow-md transform scale-105' : ''
+        isDragOver ? 'ring-2 ring-blue-400 shadow-md' : ''
       }`}
       draggable
       onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
       onDragOver={handleDragOver}
-      onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >

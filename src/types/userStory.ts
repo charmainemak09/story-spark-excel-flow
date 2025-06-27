@@ -25,4 +25,6 @@ export interface Theme {
   title: string;
   description: string;
   epics: Epic[];
+  createdAt?: string;
+  dueDate?: string;
 }
