@@ -13,7 +13,7 @@ export const useEpicReorder = () => {
       const updates = epicIds.map((epicId, index) => 
         supabase
           .from('epics')
-          .update({ order_position: index })
+          .update({ order_position: index } as any)
           .eq('id', epicId)
       );
 

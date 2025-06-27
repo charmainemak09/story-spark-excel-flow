@@ -12,7 +12,7 @@ export const useUserStoryReorder = () => {
       const updates = storyIds.map((storyId, index) => 
         supabase
           .from('user_stories')
-          .update({ order_position: index })
+          .update({ order_position: index } as any)
           .eq('id', storyId)
       );
 

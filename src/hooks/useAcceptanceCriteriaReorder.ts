@@ -12,7 +12,7 @@ export const useAcceptanceCriteriaReorder = () => {
       const updates = criteriaIds.map((criteriaId, index) => 
         supabase
           .from('acceptance_criteria')
-          .update({ order_position: index })
+          .update({ order_position: index } as any)
           .eq('id', criteriaId)
       );
 
