@@ -1,14 +1,14 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { AuthenticatedLayout } from "@/components/AuthenticatedLayout";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Calendar, Clock } from "lucide-react";
 import { useThemes } from "@/hooks/useThemes";
 import { useEpics } from "@/hooks/useEpics";
 import { useUserStories } from "@/hooks/useUserStories";
 import { useAcceptanceCriteria } from "@/hooks/useAcceptanceCriteria";
 import { ThemeCard } from "@/components/ThemeCard";
 import { ExportButton } from "@/components/ExportButton";
+import { format } from "date-fns";
 
 const ThemeDetail = () => {
   const { themeId } = useParams<{ themeId: string }>();
@@ -52,7 +52,8 @@ const ThemeDetail = () => {
     updateTheme({ 
       id: updatedTheme.id, 
       title: updatedTheme.title, 
-      description: updatedTheme.description 
+      description: updatedTheme.description,
+      dueDate: updatedTheme.dueDate
     });
   };
 
@@ -122,7 +123,21 @@ const ThemeDetail = () => {
             </Button>
             <div>
               <h1 className="text-3xl font-bold text-gray-900">{theme.title}</h1>
-              <p className="text-gray-600">{theme.description}</p>
+              <p className="text-gray-600 mb-2">{theme.description}</p>
+              <div className="flex items-center gap-4 text-sm text-gray-500">
+                {theme.createdAt && (
+                  <div className="flex items-center gap-1">
+                    <Clock className="h-4 w-4" />
+                    Created: {format(new Date(theme.createdAt), 'MMM d, yyyy')}
+                  </div>
+                )}
+                {theme.dueDate && (
+                  <div className="flex items-center gap-1">
+                    <Calendar className="h-4 w-4" />
+                    Due: {format(new Date(theme.dueDate), 'MMM d, yyyy')}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
           <ExportButton themes={[theme]} />

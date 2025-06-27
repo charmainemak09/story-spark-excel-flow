@@ -36,6 +36,8 @@ export const useThemes = () => {
         id: theme.id,
         title: theme.title,
         description: theme.description || '',
+        createdAt: theme.created_at,
+        dueDate: theme.due_date,
         epics: theme.epics.map(epic => ({
           id: epic.id,
           title: epic.title,
@@ -58,7 +60,7 @@ export const useThemes = () => {
   });
 
   const createThemeMutation = useMutation({
-    mutationFn: async ({ title, description }: { title: string; description: string }) => {
+    mutationFn: async ({ title, description, dueDate }: { title: string; description: string; dueDate?: string }) => {
       if (!user) throw new Error('User not authenticated');
       
       const { data, error } = await supabase
@@ -66,6 +68,7 @@ export const useThemes = () => {
         .insert([{
           title,
           description,
+          due_date: dueDate || null,
           user_id: user.id
         }])
         .select()
@@ -91,10 +94,10 @@ export const useThemes = () => {
   });
 
   const updateThemeMutation = useMutation({
-    mutationFn: async ({ id, title, description }: { id: string; title: string; description: string }) => {
+    mutationFn: async ({ id, title, description, dueDate }: { id: string; title: string; description: string; dueDate?: string }) => {
       const { data, error } = await supabase
         .from('themes')
-        .update({ title, description })
+        .update({ title, description, due_date: dueDate || null })
         .eq('id', id)
         .select()
         .single();

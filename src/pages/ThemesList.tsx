@@ -4,12 +4,13 @@ import { AuthenticatedLayout } from "@/components/AuthenticatedLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Eye, Edit2, Trash2, Calendar } from "lucide-react";
+import { Plus, Eye, Edit2, Trash2, Calendar, Clock } from "lucide-react";
 import { useThemes } from "@/hooks/useThemes";
 import { AddThemeDialog } from "@/components/AddThemeDialog";
 import { EditThemeDialog } from "@/components/EditThemeDialog";
 import { useNavigate } from "react-router-dom";
 import { Theme } from "@/types/userStory";
+import { format } from "date-fns";
 
 const ThemesList = () => {
   const navigate = useNavigate();
@@ -17,13 +18,13 @@ const ThemesList = () => {
   const [isAddThemeOpen, setIsAddThemeOpen] = useState(false);
   const [editingTheme, setEditingTheme] = useState<Theme | null>(null);
 
-  const addTheme = (title: string, description: string) => {
-    createTheme({ title, description });
+  const addTheme = (title: string, description: string, dueDate?: string) => {
+    createTheme({ title, description, dueDate });
   };
 
-  const handleUpdateTheme = (title: string, description: string) => {
+  const handleUpdateTheme = (title: string, description: string, dueDate?: string) => {
     if (editingTheme) {
-      updateTheme({ id: editingTheme.id, title, description });
+      updateTheme({ id: editingTheme.id, title, description, dueDate });
       setEditingTheme(null);
     }
   };
@@ -102,6 +103,20 @@ const ThemesList = () => {
                           <Badge variant="outline" className="text-xs">
                             {totalUserStories} User Stor{totalUserStories !== 1 ? 'ies' : 'y'}
                           </Badge>
+                        </div>
+                        <div className="flex flex-col gap-1 text-xs text-gray-500">
+                          {theme.createdAt && (
+                            <div className="flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              Created: {format(new Date(theme.createdAt), 'MMM d, yyyy')}
+                            </div>
+                          )}
+                          {theme.dueDate && (
+                            <div className="flex items-center gap-1">
+                              <Calendar className="h-3 w-3" />
+                              Due: {format(new Date(theme.dueDate), 'MMM d, yyyy')}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>

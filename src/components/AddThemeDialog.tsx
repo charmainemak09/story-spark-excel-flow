@@ -5,27 +5,35 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 interface AddThemeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAdd: (title: string, description: string) => void;
+  onAdd: (title: string, description: string, dueDate?: string) => void;
 }
 
 export const AddThemeDialog = ({ open, onOpenChange, onAdd }: AddThemeDialogProps) => {
   const [title, setTitle] = useState('');
   const [problemToSolve, setProblemToSolve] = useState('');
   const [projectObjective, setProjectObjective] = useState('');
+  const [dueDate, setDueDate] = useState<Date>();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (title.trim()) {
       // Combine both fields into description with clear separation
       const description = `Problem: ${problemToSolve.trim()}\n\nObjective: ${projectObjective.trim()}`;
-      onAdd(title.trim(), description);
+      const dueDateString = dueDate ? format(dueDate, 'yyyy-MM-dd') : undefined;
+      onAdd(title.trim(), description, dueDateString);
       setTitle('');
       setProblemToSolve('');
       setProjectObjective('');
+      setDueDate(undefined);
       onOpenChange(false);
     }
   };
@@ -69,6 +77,31 @@ export const AddThemeDialog = ({ open, onOpenChange, onAdd }: AddThemeDialogProp
               onChange={(e) => setProjectObjective(e.target.value)}
               rows={3}
             />
+          </div>
+          <div className="space-y-2">
+            <Label>Due Date (Optional)</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !dueDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {dueDate ? format(dueDate, "PPP") : "Pick a due date"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <Calendar
+                  mode="single"
+                  selected={dueDate}
+                  onSelect={setDueDate}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
           </div>
           <div className="flex justify-end space-x-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
