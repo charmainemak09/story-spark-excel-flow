@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -85,7 +86,9 @@ export const UserStoryCard = ({
   };
 
   const handleDragStart = (e: React.DragEvent) => {
+    console.log('User story drag start:', userStory.id);
     e.dataTransfer.setData('text/plain', userStory.id);
+    e.dataTransfer.setData('application/json', JSON.stringify({ type: 'user-story', id: userStory.id }));
     e.dataTransfer.effectAllowed = 'move';
   };
 
@@ -105,15 +108,34 @@ export const UserStoryCard = ({
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsDragOver(false);
     
     const draggedId = e.dataTransfer.getData('text/plain');
-    if (draggedId && draggedId !== userStory.id && onReorder) {
-      onReorder(draggedId, userStory.id);
+    const dragData = e.dataTransfer.getData('application/json');
+    
+    console.log('User story drop:', { draggedId, targetId: userStory.id, dragData });
+    
+    if (draggedId && draggedId !== userStory.id) {
+      // Check if it's a user story being dragged
+      try {
+        const parsedData = JSON.parse(dragData);
+        if (parsedData.type === 'user-story' && onReorder) {
+          console.log('Reordering user story:', draggedId, 'to', userStory.id);
+          onReorder(draggedId, userStory.id);
+        }
+      } catch (error) {
+        // Fallback to plain text data
+        if (onReorder) {
+          console.log('Fallback reordering user story:', draggedId, 'to', userStory.id);
+          onReorder(draggedId, userStory.id);
+        }
+      }
     }
   };
 
   const handleAcceptanceCriteriaReorder = (draggedCriteriaId: string, targetCriteriaId: string) => {
+    console.log('Reordering acceptance criteria:', draggedCriteriaId, 'to', targetCriteriaId);
     const criteria = [...userStory.acceptanceCriteria];
     const draggedIndex = criteria.findIndex(c => c.id === draggedCriteriaId);
     const targetIndex = criteria.findIndex(c => c.id === targetCriteriaId);

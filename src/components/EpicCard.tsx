@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -90,7 +91,9 @@ export const EpicCard = ({
   };
 
   const handleDragStart = (e: React.DragEvent) => {
+    console.log('Epic drag start:', epic.id);
     e.dataTransfer.setData('text/plain', epic.id);
+    e.dataTransfer.setData('application/json', JSON.stringify({ type: 'epic', id: epic.id }));
     e.dataTransfer.effectAllowed = 'move';
   };
 
@@ -113,12 +116,30 @@ export const EpicCard = ({
     setIsDragOver(false);
     
     const draggedId = e.dataTransfer.getData('text/plain');
-    if (draggedId && draggedId !== epic.id && onReorder) {
-      onReorder(draggedId, epic.id);
+    const dragData = e.dataTransfer.getData('application/json');
+    
+    console.log('Epic drop:', { draggedId, targetId: epic.id, dragData });
+    
+    if (draggedId && draggedId !== epic.id) {
+      // Check if it's an epic being dragged
+      try {
+        const parsedData = JSON.parse(dragData);
+        if (parsedData.type === 'epic' && onReorder) {
+          console.log('Reordering epic:', draggedId, 'to', epic.id);
+          onReorder(draggedId, epic.id);
+        }
+      } catch (error) {
+        // Fallback to plain text data for epics
+        if (onReorder) {
+          console.log('Fallback reordering epic:', draggedId, 'to', epic.id);
+          onReorder(draggedId, epic.id);
+        }
+      }
     }
   };
 
   const handleUserStoryReorder = (draggedStoryId: string, targetStoryId: string) => {
+    console.log('Reordering user stories:', draggedStoryId, 'to', targetStoryId);
     const stories = [...epic.userStories];
     const draggedIndex = stories.findIndex(s => s.id === draggedStoryId);
     const targetIndex = stories.findIndex(s => s.id === targetStoryId);

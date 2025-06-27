@@ -48,17 +48,22 @@ export const AcceptanceCriteriaCard = ({
   };
 
   const handleDragStart = (e: React.DragEvent) => {
+    console.log('Acceptance criteria drag start:', criteria.id);
     e.dataTransfer.setData('text/plain', criteria.id);
+    e.dataTransfer.setData('application/json', JSON.stringify({ type: 'acceptance-criteria', id: criteria.id }));
     e.dataTransfer.effectAllowed = 'move';
+    e.stopPropagation();
   };
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     e.dataTransfer.dropEffect = 'move';
     setIsDragOver(true);
   };
 
   const handleDragLeave = (e: React.DragEvent) => {
+    e.stopPropagation();
     const rect = e.currentTarget.getBoundingClientRect();
     if (e.clientX < rect.left || e.clientX > rect.right || 
         e.clientY < rect.top || e.clientY > rect.bottom) {
@@ -68,11 +73,29 @@ export const AcceptanceCriteriaCard = ({
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsDragOver(false);
     
     const draggedId = e.dataTransfer.getData('text/plain');
-    if (draggedId && draggedId !== criteria.id && onReorder) {
-      onReorder(draggedId, criteria.id);
+    const dragData = e.dataTransfer.getData('application/json');
+    
+    console.log('Acceptance criteria drop:', { draggedId, targetId: criteria.id, dragData });
+    
+    if (draggedId && draggedId !== criteria.id) {
+      // Check if it's an acceptance criteria being dragged
+      try {
+        const parsedData = JSON.parse(dragData);
+        if (parsedData.type === 'acceptance-criteria' && onReorder) {
+          console.log('Reordering acceptance criteria:', draggedId, 'to', criteria.id);
+          onReorder(draggedId, criteria.id);
+        }
+      } catch (error) {
+        // Fallback to plain text data for acceptance criteria
+        if (onReorder) {
+          console.log('Fallback reordering acceptance criteria:', draggedId, 'to', criteria.id);
+          onReorder(draggedId, criteria.id);
+        }
+      }
     }
   };
 
