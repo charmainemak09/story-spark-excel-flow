@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit2, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Edit2, Trash2, ChevronDown, ChevronUp, Upload } from 'lucide-react';
 import { Theme } from '@/types/userStory';
 import { EpicCard } from './EpicCard';
 import { AddEpicDialog } from './AddEpicDialog';
@@ -10,6 +10,8 @@ import { EditThemeDialog } from './EditThemeDialog';
 import { useEpicReorder } from '@/hooks/useEpicReorder';
 import { useUserStories } from '@/hooks/useUserStories';
 import { useAcceptanceCriteria } from '@/hooks/useAcceptanceCriteria';
+import { BulkImportDialog } from './BulkImportDialog';
+import { useBulkImport } from '@/hooks/useBulkImport';
 
 interface ThemeCardProps {
   theme: Theme;
@@ -43,9 +45,11 @@ export const ThemeCard = ({
   const [isExpanded, setIsExpanded] = useState(true);
   const [isAddEpicOpen, setIsAddEpicOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
   const { reorderEpics } = useEpicReorder();
   const { updateUserStory } = useUserStories();
   const { updateAcceptanceCriteria } = useAcceptanceCriteria();
+  const { bulkImport } = useBulkImport(theme.id);
 
   const addEpic = (title: string) => {
     if (onAddEpic) {
@@ -226,6 +230,15 @@ export const ThemeCard = ({
 
   const totalUserStories = theme.epics.reduce((total, epic) => total + epic.userStories.length, 0);
 
+  const handleBulkImport = async (importData: any[]) => {
+    return await new Promise<any>((resolve) => {
+      bulkImport(importData, {
+        onSuccess: (result) => resolve(result),
+        onError: () => resolve({ totalRows: 0, newUserStories: 0, duplicatesSkipped: 0 })
+      });
+    });
+  };
+
   return (
     <Card className="border-2 border-blue-200 bg-blue-50">
       <CardHeader className="pb-4">
@@ -266,6 +279,15 @@ export const ThemeCard = ({
               className="text-blue-600 hover:text-blue-700 hover:bg-blue-100"
             >
               {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </Button>
+            <Button
+              onClick={() => setIsBulkImportOpen(true)}
+              size="sm"
+              variant="outline"
+              className="border-green-300 text-green-600 hover:bg-green-100"
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              Bulk Import
             </Button>
           </div>
         </div>
@@ -333,6 +355,12 @@ export const ThemeCard = ({
         onOpenChange={setIsEditOpen}
         theme={theme}
         onUpdate={updateTheme}
+      />
+
+      <BulkImportDialog
+        open={isBulkImportOpen}
+        onOpenChange={setIsBulkImportOpen}
+        onImport={handleBulkImport}
       />
     </Card>
   );
