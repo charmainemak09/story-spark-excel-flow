@@ -1,23 +1,14 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from './useAuth';
 import { useToast } from './use-toast';
 
 export const useAcceptanceCriteria = () => {
-  const { user } = useAuth();
-  const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const createAcceptanceCriteriaMutation = useMutation({
-    mutationFn: async ({ userStoryId, given, when, then }: { 
-      userStoryId: string; 
-      given: string; 
-      when: string; 
-      then: string; 
-    }) => {
-      if (!user) throw new Error('User not authenticated');
-      
+    mutationFn: async ({ userStoryId, given, when, then }: { userStoryId: string; given: string; when: string; then: string }) => {
       const { data, error } = await supabase
         .from('acceptance_criteria')
         .insert([{
@@ -39,8 +30,7 @@ export const useAcceptanceCriteria = () => {
         description: "Acceptance criteria created successfully",
       });
     },
-    onError: (error) => {
-      console.error('Acceptance criteria creation error:', error);
+    onError: () => {
       toast({
         title: "Error",
         description: "Failed to create acceptance criteria",
@@ -50,19 +40,20 @@ export const useAcceptanceCriteria = () => {
   });
 
   const updateAcceptanceCriteriaMutation = useMutation({
-    mutationFn: async ({ id, given, when, then }: { 
-      id: string; 
-      given: string; 
-      when: string; 
-      then: string; 
-    }) => {
+    mutationFn: async ({ id, userStoryId, given, when, then }: { id: string; userStoryId?: string; given: string; when: string; then: string }) => {
+      const updateData: any = {
+        given_condition: given,
+        when_action: when,
+        then_result: then
+      };
+      
+      if (userStoryId) {
+        updateData.user_story_id = userStoryId;
+      }
+      
       const { data, error } = await supabase
         .from('acceptance_criteria')
-        .update({ 
-          given_condition: given,
-          when_action: when,
-          then_result: then 
-        })
+        .update(updateData)
         .eq('id', id)
         .select()
         .single();

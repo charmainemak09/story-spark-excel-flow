@@ -8,6 +8,8 @@ import { EpicCard } from './EpicCard';
 import { AddEpicDialog } from './AddEpicDialog';
 import { EditThemeDialog } from './EditThemeDialog';
 import { useEpicReorder } from '@/hooks/useEpicReorder';
+import { useUserStories } from '@/hooks/useUserStories';
+import { useAcceptanceCriteria } from '@/hooks/useAcceptanceCriteria';
 
 interface ThemeCardProps {
   theme: Theme;
@@ -42,6 +44,8 @@ export const ThemeCard = ({
   const [isAddEpicOpen, setIsAddEpicOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const { reorderEpics } = useEpicReorder();
+  const { updateUserStory } = useUserStories();
+  const { updateAcceptanceCriteria } = useAcceptanceCriteria();
 
   const addEpic = (title: string) => {
     if (onAddEpic) {
@@ -110,6 +114,114 @@ export const ThemeCard = ({
       const epicIds = epics.map(epic => epic.id);
       reorderEpics({ themeId: theme.id, epicIds });
     }
+  };
+
+  const handleUserStoryMove = (storyId: string, targetEpicId: string) => {
+    console.log('Moving user story:', storyId, 'to epic:', targetEpicId);
+    
+    // Find the story in the current theme
+    let sourceEpicId = '';
+    let storyToMove = null;
+    
+    for (const epic of theme.epics) {
+      const story = epic.userStories.find(s => s.id === storyId);
+      if (story) {
+        sourceEpicId = epic.id;
+        storyToMove = story;
+        break;
+      }
+    }
+    
+    if (!storyToMove || sourceEpicId === targetEpicId) return;
+    
+    // Update local state
+    const updatedEpics = theme.epics.map(epic => {
+      if (epic.id === sourceEpicId) {
+        // Remove story from source epic
+        return {
+          ...epic,
+          userStories: epic.userStories.filter(s => s.id !== storyId)
+        };
+      } else if (epic.id === targetEpicId) {
+        // Add story to target epic
+        return {
+          ...epic,
+          userStories: [...epic.userStories, storyToMove]
+        };
+      }
+      return epic;
+    });
+    
+    onUpdate({
+      ...theme,
+      epics: updatedEpics
+    });
+    
+    // Update database
+    updateUserStory({ 
+      id: storyId, 
+      epicId: targetEpicId,
+      user: storyToMove.user, 
+      action: storyToMove.action, 
+      result: storyToMove.result 
+    });
+  };
+
+  const handleAcceptanceCriteriaMove = (criteriaId: string, targetUserStoryId: string) => {
+    console.log('Moving acceptance criteria:', criteriaId, 'to user story:', targetUserStoryId);
+    
+    // Find the criteria in the current theme
+    let sourceUserStoryId = '';
+    let criteriaToMove = null;
+    
+    for (const epic of theme.epics) {
+      for (const story of epic.userStories) {
+        const criteria = story.acceptanceCriteria.find(c => c.id === criteriaId);
+        if (criteria) {
+          sourceUserStoryId = story.id;
+          criteriaToMove = criteria;
+          break;
+        }
+      }
+      if (criteriaToMove) break;
+    }
+    
+    if (!criteriaToMove || sourceUserStoryId === targetUserStoryId) return;
+    
+    // Update local state
+    const updatedEpics = theme.epics.map(epic => ({
+      ...epic,
+      userStories: epic.userStories.map(story => {
+        if (story.id === sourceUserStoryId) {
+          // Remove criteria from source story
+          return {
+            ...story,
+            acceptanceCriteria: story.acceptanceCriteria.filter(c => c.id !== criteriaId)
+          };
+        } else if (story.id === targetUserStoryId) {
+          // Add criteria to target story
+          return {
+            ...story,
+            acceptanceCriteria: [...story.acceptanceCriteria, criteriaToMove]
+          };
+        }
+        return story;
+      })
+    }));
+    
+    onUpdate({
+      ...theme,
+      epics: updatedEpics
+    });
+    
+    // Update database
+    updateAcceptanceCriteria({ 
+      id: criteriaId, 
+      userStoryId: targetUserStoryId,
+      given: criteriaToMove.given, 
+      when: criteriaToMove.when, 
+      then: criteriaToMove.then 
+    });
   };
 
   const totalUserStories = theme.epics.reduce((total, epic) => total + epic.userStories.length, 0);
@@ -201,6 +313,8 @@ export const ThemeCard = ({
                   onAddAcceptanceCriteria={onAddAcceptanceCriteria}
                   onUpdateAcceptanceCriteria={onUpdateAcceptanceCriteria}
                   onDeleteAcceptanceCriteria={onDeleteAcceptanceCriteria}
+                  onUserStoryMove={handleUserStoryMove}
+                  onAcceptanceCriteriaMove={handleAcceptanceCriteriaMove}
                 />
               ))}
             </div>

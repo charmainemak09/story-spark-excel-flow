@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -18,6 +17,7 @@ interface UserStoryCardProps {
   onAddAcceptanceCriteria?: (userStoryId: string, given: string, when: string, then: string) => void;
   onUpdateAcceptanceCriteria?: (criteriaId: string, given: string, when: string, then: string) => void;
   onDeleteAcceptanceCriteria?: (criteriaId: string) => void;
+  onAcceptanceCriteriaMove?: (criteriaId: string, targetUserStoryId: string) => void;
 }
 
 export const UserStoryCard = ({ 
@@ -27,7 +27,8 @@ export const UserStoryCard = ({
   onReorder,
   onAddAcceptanceCriteria,
   onUpdateAcceptanceCriteria,
-  onDeleteAcceptanceCriteria
+  onDeleteAcceptanceCriteria,
+  onAcceptanceCriteriaMove
 }: UserStoryCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isAddCriteriaOpen, setIsAddCriteriaOpen] = useState(false);
@@ -95,21 +96,20 @@ export const UserStoryCard = ({
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    const dragData = e.dataTransfer.getData('application/json');
     
     try {
-      const parsedData = JSON.parse(dragData);
-      if (parsedData.type === 'user-story') {
-        e.dataTransfer.dropEffect = 'move';
-        setIsDragOver(true);
+      const dragData = e.dataTransfer.getData('application/json');
+      if (dragData) {
+        const parsedData = JSON.parse(dragData);
+        if (parsedData.type === 'user-story' || parsedData.type === 'acceptance-criteria') {
+          e.dataTransfer.dropEffect = 'move';
+          setIsDragOver(true);
+        }
       }
     } catch {
-      // Check if it's a plain text user story ID
-      const draggedId = e.dataTransfer.getData('text/plain');
-      if (draggedId && draggedId !== userStory.id) {
-        e.dataTransfer.dropEffect = 'move';
-        setIsDragOver(true);
-      }
+      // Fallback for plain text data
+      e.dataTransfer.dropEffect = 'move';
+      setIsDragOver(true);
     }
   };
 
@@ -128,19 +128,21 @@ export const UserStoryCard = ({
     setIsDragOver(false);
     
     const draggedId = e.dataTransfer.getData('text/plain');
-    const dragData = e.dataTransfer.getData('application/json');
     
-    console.log('User story drop:', { draggedId, targetId: userStory.id, dragData });
-    
-    if (draggedId && draggedId !== userStory.id && onReorder) {
-      try {
-        const parsedData = JSON.parse(dragData);
-        if (parsedData.type === 'user-story') {
-          console.log('Reordering user story:', draggedId, 'to', userStory.id);
-          onReorder(draggedId, userStory.id);
-        }
-      } catch {
-        // Fallback for plain text data
+    try {
+      const dragData = e.dataTransfer.getData('application/json');
+      const parsedData = JSON.parse(dragData);
+      
+      if (parsedData.type === 'user-story' && draggedId !== userStory.id && onReorder) {
+        console.log('Reordering user story:', draggedId, 'to', userStory.id);
+        onReorder(draggedId, userStory.id);
+      } else if (parsedData.type === 'acceptance-criteria' && onAcceptanceCriteriaMove) {
+        console.log('Moving acceptance criteria:', draggedId, 'to user story:', userStory.id);
+        onAcceptanceCriteriaMove(draggedId, userStory.id);
+      }
+    } catch {
+      // Fallback for plain text data
+      if (draggedId && draggedId !== userStory.id && onReorder) {
         console.log('Fallback reordering user story:', draggedId, 'to', userStory.id);
         onReorder(draggedId, userStory.id);
       }

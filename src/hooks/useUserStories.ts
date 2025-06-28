@@ -1,28 +1,19 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from './useAuth';
 import { useToast } from './use-toast';
 
 export const useUserStories = () => {
-  const { user } = useAuth();
-  const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const createUserStoryMutation = useMutation({
-    mutationFn: async ({ epicId, user: userRole, action, result }: { 
-      epicId: string; 
-      user: string; 
-      action: string; 
-      result: string; 
-    }) => {
-      if (!user) throw new Error('User not authenticated');
-      
+    mutationFn: async ({ epicId, user, action, result }: { epicId: string; user: string; action: string; result: string }) => {
       const { data, error } = await supabase
         .from('user_stories')
         .insert([{
           epic_id: epicId,
-          user_role: userRole,
+          user_role: user,
           action,
           result
         }])
@@ -39,8 +30,7 @@ export const useUserStories = () => {
         description: "User story created successfully",
       });
     },
-    onError: (error) => {
-      console.error('User story creation error:', error);
+    onError: () => {
       toast({
         title: "Error",
         description: "Failed to create user story",
@@ -50,19 +40,20 @@ export const useUserStories = () => {
   });
 
   const updateUserStoryMutation = useMutation({
-    mutationFn: async ({ id, user: userRole, action, result }: { 
-      id: string; 
-      user: string; 
-      action: string; 
-      result: string; 
-    }) => {
+    mutationFn: async ({ id, epicId, user, action, result }: { id: string; epicId?: string; user: string; action: string; result: string }) => {
+      const updateData: any = {
+        user_role: user,
+        action,
+        result
+      };
+      
+      if (epicId) {
+        updateData.epic_id = epicId;
+      }
+      
       const { data, error } = await supabase
         .from('user_stories')
-        .update({ 
-          user_role: userRole,
-          action,
-          result 
-        })
+        .update(updateData)
         .eq('id', id)
         .select()
         .single();

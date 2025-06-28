@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,6 +20,7 @@ interface EpicCardProps {
   onAddAcceptanceCriteria?: (userStoryId: string, given: string, when: string, then: string) => void;
   onUpdateAcceptanceCriteria?: (criteriaId: string, given: string, when: string, then: string) => void;
   onDeleteAcceptanceCriteria?: (criteriaId: string) => void;
+  onUserStoryMove?: (storyId: string, targetEpicId: string) => void;
 }
 
 export const EpicCard = ({ 
@@ -33,7 +33,8 @@ export const EpicCard = ({
   onDeleteUserStory,
   onAddAcceptanceCriteria,
   onUpdateAcceptanceCriteria,
-  onDeleteAcceptanceCriteria
+  onDeleteAcceptanceCriteria,
+  onUserStoryMove
 }: EpicCardProps) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const [isAddStoryOpen, setIsAddStoryOpen] = useState(false);
@@ -100,13 +101,15 @@ export const EpicCard = ({
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    const dragData = e.dataTransfer.getData('application/json');
     
     try {
-      const parsedData = JSON.parse(dragData);
-      if (parsedData.type === 'epic') {
-        e.dataTransfer.dropEffect = 'move';
-        setIsDragOver(true);
+      const dragData = e.dataTransfer.getData('application/json');
+      if (dragData) {
+        const parsedData = JSON.parse(dragData);
+        if (parsedData.type === 'epic' || parsedData.type === 'user-story') {
+          e.dataTransfer.dropEffect = 'move';
+          setIsDragOver(true);
+        }
       }
     } catch {
       // Fallback for plain text data
@@ -130,19 +133,21 @@ export const EpicCard = ({
     setIsDragOver(false);
     
     const draggedId = e.dataTransfer.getData('text/plain');
-    const dragData = e.dataTransfer.getData('application/json');
     
-    console.log('Epic drop:', { draggedId, targetId: epic.id, dragData });
-    
-    if (draggedId && draggedId !== epic.id && onReorder) {
-      try {
-        const parsedData = JSON.parse(dragData);
-        if (parsedData.type === 'epic') {
-          console.log('Reordering epic:', draggedId, 'to', epic.id);
-          onReorder(draggedId, epic.id);
-        }
-      } catch {
-        // Fallback for plain text data
+    try {
+      const dragData = e.dataTransfer.getData('application/json');
+      const parsedData = JSON.parse(dragData);
+      
+      if (parsedData.type === 'epic' && draggedId !== epic.id && onReorder) {
+        console.log('Reordering epic:', draggedId, 'to', epic.id);
+        onReorder(draggedId, epic.id);
+      } else if (parsedData.type === 'user-story' && onUserStoryMove) {
+        console.log('Moving user story:', draggedId, 'to epic:', epic.id);
+        onUserStoryMove(draggedId, epic.id);
+      }
+    } catch {
+      // Fallback for plain text data
+      if (draggedId && draggedId !== epic.id && onReorder) {
         console.log('Fallback reordering epic:', draggedId, 'to', epic.id);
         onReorder(draggedId, epic.id);
       }
@@ -266,6 +271,7 @@ export const EpicCard = ({
                   onAddAcceptanceCriteria={onAddAcceptanceCriteria}
                   onUpdateAcceptanceCriteria={onUpdateAcceptanceCriteria}
                   onDeleteAcceptanceCriteria={onDeleteAcceptanceCriteria}
+                  onAcceptanceCriteriaMove={onAcceptanceCriteriaMove}
                 />
               ))}
             </div>
