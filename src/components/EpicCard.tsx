@@ -99,11 +99,24 @@ export const EpicCard = ({
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    setIsDragOver(true);
+    e.stopPropagation();
+    const dragData = e.dataTransfer.getData('application/json');
+    
+    try {
+      const parsedData = JSON.parse(dragData);
+      if (parsedData.type === 'epic') {
+        e.dataTransfer.dropEffect = 'move';
+        setIsDragOver(true);
+      }
+    } catch {
+      // Fallback for plain text data
+      e.dataTransfer.dropEffect = 'move';
+      setIsDragOver(true);
+    }
   };
 
   const handleDragLeave = (e: React.DragEvent) => {
+    e.stopPropagation();
     const rect = e.currentTarget.getBoundingClientRect();
     if (e.clientX < rect.left || e.clientX > rect.right || 
         e.clientY < rect.top || e.clientY > rect.bottom) {
@@ -113,6 +126,7 @@ export const EpicCard = ({
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsDragOver(false);
     
     const draggedId = e.dataTransfer.getData('text/plain');
@@ -120,20 +134,17 @@ export const EpicCard = ({
     
     console.log('Epic drop:', { draggedId, targetId: epic.id, dragData });
     
-    if (draggedId && draggedId !== epic.id) {
-      // Check if it's an epic being dragged
+    if (draggedId && draggedId !== epic.id && onReorder) {
       try {
         const parsedData = JSON.parse(dragData);
-        if (parsedData.type === 'epic' && onReorder) {
+        if (parsedData.type === 'epic') {
           console.log('Reordering epic:', draggedId, 'to', epic.id);
           onReorder(draggedId, epic.id);
         }
-      } catch (error) {
-        // Fallback to plain text data for epics
-        if (onReorder) {
-          console.log('Fallback reordering epic:', draggedId, 'to', epic.id);
-          onReorder(draggedId, epic.id);
-        }
+      } catch {
+        // Fallback for plain text data
+        console.log('Fallback reordering epic:', draggedId, 'to', epic.id);
+        onReorder(draggedId, epic.id);
       }
     }
   };
@@ -144,7 +155,7 @@ export const EpicCard = ({
     const draggedIndex = stories.findIndex(s => s.id === draggedStoryId);
     const targetIndex = stories.findIndex(s => s.id === targetStoryId);
     
-    if (draggedIndex !== -1 && targetIndex !== -1) {
+    if (draggedIndex !== -1 && targetIndex !== -1 && draggedIndex !== targetIndex) {
       const [draggedStory] = stories.splice(draggedIndex, 1);
       stories.splice(targetIndex, 0, draggedStory);
       

@@ -58,8 +58,22 @@ export const AcceptanceCriteriaCard = ({
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    e.dataTransfer.dropEffect = 'move';
-    setIsDragOver(true);
+    const dragData = e.dataTransfer.getData('application/json');
+    
+    try {
+      const parsedData = JSON.parse(dragData);
+      if (parsedData.type === 'acceptance-criteria') {
+        e.dataTransfer.dropEffect = 'move';
+        setIsDragOver(true);
+      }
+    } catch {
+      // Check if it's a plain text criteria ID
+      const draggedId = e.dataTransfer.getData('text/plain');
+      if (draggedId && draggedId !== criteria.id) {
+        e.dataTransfer.dropEffect = 'move';
+        setIsDragOver(true);
+      }
+    }
   };
 
   const handleDragLeave = (e: React.DragEvent) => {
@@ -81,20 +95,17 @@ export const AcceptanceCriteriaCard = ({
     
     console.log('Acceptance criteria drop:', { draggedId, targetId: criteria.id, dragData });
     
-    if (draggedId && draggedId !== criteria.id) {
-      // Check if it's an acceptance criteria being dragged
+    if (draggedId && draggedId !== criteria.id && onReorder) {
       try {
         const parsedData = JSON.parse(dragData);
-        if (parsedData.type === 'acceptance-criteria' && onReorder) {
+        if (parsedData.type === 'acceptance-criteria') {
           console.log('Reordering acceptance criteria:', draggedId, 'to', criteria.id);
           onReorder(draggedId, criteria.id);
         }
-      } catch (error) {
-        // Fallback to plain text data for acceptance criteria
-        if (onReorder) {
-          console.log('Fallback reordering acceptance criteria:', draggedId, 'to', criteria.id);
-          onReorder(draggedId, criteria.id);
-        }
+      } catch {
+        // Fallback for plain text data
+        console.log('Fallback reordering acceptance criteria:', draggedId, 'to', criteria.id);
+        onReorder(draggedId, criteria.id);
       }
     }
   };

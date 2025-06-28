@@ -94,11 +94,27 @@ export const UserStoryCard = ({
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    setIsDragOver(true);
+    e.stopPropagation();
+    const dragData = e.dataTransfer.getData('application/json');
+    
+    try {
+      const parsedData = JSON.parse(dragData);
+      if (parsedData.type === 'user-story') {
+        e.dataTransfer.dropEffect = 'move';
+        setIsDragOver(true);
+      }
+    } catch {
+      // Check if it's a plain text user story ID
+      const draggedId = e.dataTransfer.getData('text/plain');
+      if (draggedId && draggedId !== userStory.id) {
+        e.dataTransfer.dropEffect = 'move';
+        setIsDragOver(true);
+      }
+    }
   };
 
   const handleDragLeave = (e: React.DragEvent) => {
+    e.stopPropagation();
     const rect = e.currentTarget.getBoundingClientRect();
     if (e.clientX < rect.left || e.clientX > rect.right || 
         e.clientY < rect.top || e.clientY > rect.bottom) {
@@ -116,20 +132,17 @@ export const UserStoryCard = ({
     
     console.log('User story drop:', { draggedId, targetId: userStory.id, dragData });
     
-    if (draggedId && draggedId !== userStory.id) {
-      // Check if it's a user story being dragged
+    if (draggedId && draggedId !== userStory.id && onReorder) {
       try {
         const parsedData = JSON.parse(dragData);
-        if (parsedData.type === 'user-story' && onReorder) {
+        if (parsedData.type === 'user-story') {
           console.log('Reordering user story:', draggedId, 'to', userStory.id);
           onReorder(draggedId, userStory.id);
         }
-      } catch (error) {
-        // Fallback to plain text data
-        if (onReorder) {
-          console.log('Fallback reordering user story:', draggedId, 'to', userStory.id);
-          onReorder(draggedId, userStory.id);
-        }
+      } catch {
+        // Fallback for plain text data
+        console.log('Fallback reordering user story:', draggedId, 'to', userStory.id);
+        onReorder(draggedId, userStory.id);
       }
     }
   };
@@ -140,7 +153,7 @@ export const UserStoryCard = ({
     const draggedIndex = criteria.findIndex(c => c.id === draggedCriteriaId);
     const targetIndex = criteria.findIndex(c => c.id === targetCriteriaId);
     
-    if (draggedIndex !== -1 && targetIndex !== -1) {
+    if (draggedIndex !== -1 && targetIndex !== -1 && draggedIndex !== targetIndex) {
       const [draggedCriteria] = criteria.splice(draggedIndex, 1);
       criteria.splice(targetIndex, 0, draggedCriteria);
       
