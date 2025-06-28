@@ -21,6 +21,7 @@ interface EpicCardProps {
   onUpdateAcceptanceCriteria?: (criteriaId: string, given: string, when: string, then: string) => void;
   onDeleteAcceptanceCriteria?: (criteriaId: string) => void;
   onUserStoryMove?: (storyId: string, targetEpicId: string) => void;
+  onAcceptanceCriteriaMove?: (criteriaId: string, targetUserStoryId: string) => void;
 }
 
 export const EpicCard = ({ 
@@ -34,7 +35,8 @@ export const EpicCard = ({
   onAddAcceptanceCriteria,
   onUpdateAcceptanceCriteria,
   onDeleteAcceptanceCriteria,
-  onUserStoryMove
+  onUserStoryMove,
+  onAcceptanceCriteriaMove
 }: EpicCardProps) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const [isAddStoryOpen, setIsAddStoryOpen] = useState(false);
