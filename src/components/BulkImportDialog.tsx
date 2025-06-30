@@ -35,34 +35,28 @@ export const BulkImportDialog = ({ open, onOpenChange, onImport }: BulkImportDia
   const { toast } = useToast();
 
   const downloadTemplate = () => {
+    // Create CSV template data that matches the export format
     const templateData = [
-      {
-        'Theme': 'User Management',
-        'Epic': 'User Authentication',
-        'User Story': 'As a customer, I want to log into my account, so that I can access my personal information',
-        'Acceptance Criteria': 'Given I am on the login page, When I enter valid credentials, Then I should be redirected to my dashboard'
-      },
-      {
-        'Theme': 'User Management',
-        'Epic': 'User Authentication',
-        'User Story': 'As a customer, I want to reset my password, so that I can regain access to my account',
-        'Acceptance Criteria': 'Given I forgot my password, When I click reset password, Then I should receive a reset email'
-      }
+      ['Theme', 'Epic', 'User Story', 'Acceptance Criteria'],
+      ['User Management', 'User Authentication', 'As a customer, I want to log into my account, so that I can access my personal information', 'Given I am on the login page, When I enter valid credentials, Then I should be redirected to my dashboard'],
+      ['User Management', 'User Authentication', 'As a customer, I want to reset my password, so that I can regain access to my account', 'Given I forgot my password, When I click reset password, Then I should receive a reset email']
     ];
 
-    const worksheet = XLSX.utils.json_to_sheet(templateData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'User Stories Template');
-    
-    // Set column widths
-    worksheet['!cols'] = [
-      { wch: 20 }, // Theme
-      { wch: 20 }, // Epic
-      { wch: 50 }, // User Story
-      { wch: 60 }  // Acceptance Criteria
-    ];
+    // Convert to CSV string
+    const csvContent = templateData
+      .map(row => row.map(cell => `"${cell.replace(/"/g, '""')}"`).join(','))
+      .join('\n');
 
-    XLSX.writeFile(workbook, 'user-stories-template.xlsx');
+    // Create and download file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'user-stories-template.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -94,15 +88,81 @@ export const BulkImportDialog = ({ open, onOpenChange, onImport }: BulkImportDia
     };
   };
 
-  const processExcelFile = async () => {
+  const parseCSVFile = async (file: File) => {
+    return new Promise<any[]>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const csv = e.target?.result as string;
+          const lines = csv.split('\n').filter(line => line.trim());
+          
+          if (lines.length < 2) {
+            reject(new Error('CSV file must have at least a header row and one data row'));
+            return;
+          }
+
+          // Parse header
+          const header = lines[0].split(',').map(h => h.replace(/"/g, '').trim());
+          
+          // Parse data rows
+          const data = lines.slice(1).map(line => {
+            const values = [];
+            let current = '';
+            let inQuotes = false;
+            
+            for (let i = 0; i < line.length; i++) {
+              const char = line[i];
+              if (char === '"') {
+                if (inQuotes && line[i + 1] === '"') {
+                  current += '"';
+                  i++; // Skip next quote
+                } else {
+                  inQuotes = !inQuotes;
+                }
+              } else if (char === ',' && !inQuotes) {
+                values.push(current.trim());
+                current = '';
+              } else {
+                current += char;
+              }
+            }
+            values.push(current.trim()); // Add last value
+
+            // Create object from header and values
+            const obj: any = {};
+            header.forEach((h, index) => {
+              obj[h] = values[index] || '';
+            });
+            return obj;
+          });
+
+          resolve(data);
+        } catch (error) {
+          reject(error);
+        }
+      };
+      reader.onerror = () => reject(new Error('Failed to read CSV file'));
+      reader.readAsText(file);
+    });
+  };
+
+  const processFile = async () => {
     if (!file) return;
 
     setIsProcessing(true);
     try {
-      const arrayBuffer = await file.arrayBuffer();
-      const workbook = XLSX.read(arrayBuffer);
-      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+      let jsonData: any[] = [];
+
+      if (file.name.toLowerCase().endsWith('.csv')) {
+        // Handle CSV file
+        jsonData = await parseCSVFile(file);
+      } else {
+        // Handle Excel file
+        const arrayBuffer = await file.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer);
+        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+        jsonData = XLSX.utils.sheet_to_json(worksheet);
+      }
 
       const importData: ImportData[] = jsonData.map((row: any) => {
         const userStoryText = row['User Story'] || '';
@@ -120,7 +180,7 @@ export const BulkImportDialog = ({ open, onOpenChange, onImport }: BulkImportDia
       if (importData.length === 0) {
         toast({
           title: "Error",
-          description: "No valid data found in the Excel file. Please check the template format.",
+          description: "No valid data found in the file. Please check the template format.",
           variant: "destructive",
         });
         return;
@@ -138,7 +198,7 @@ export const BulkImportDialog = ({ open, onOpenChange, onImport }: BulkImportDia
       console.error('Import error:', error);
       toast({
         title: "Import Failed",
-        description: "Failed to process the Excel file. Please check the file format.",
+        description: "Failed to process the file. Please check the file format.",
         variant: "destructive",
       });
     } finally {
@@ -158,7 +218,7 @@ export const BulkImportDialog = ({ open, onOpenChange, onImport }: BulkImportDia
         <DialogHeader>
           <DialogTitle>Bulk Import User Stories</DialogTitle>
           <DialogDescription>
-            Upload an Excel file to import multiple user stories at once. The template format matches your CSV export structure.
+            Upload a CSV or Excel file to import multiple user stories at once. The format matches your CSV export structure.
           </DialogDescription>
         </DialogHeader>
 
@@ -167,7 +227,7 @@ export const BulkImportDialog = ({ open, onOpenChange, onImport }: BulkImportDia
           <div className="bg-blue-50 p-4 rounded-lg">
             <h4 className="font-medium text-blue-900 mb-2">Step 1: Download Template</h4>
             <p className="text-sm text-blue-700 mb-3">
-              Download the Excel template with the same format as your CSV exports (Theme, Epic, User Story, Acceptance Criteria).
+              Download the CSV template with the same format as your CSV exports (Theme, Epic, User Story, Acceptance Criteria).
             </p>
             <Button
               onClick={downloadTemplate}
@@ -175,19 +235,19 @@ export const BulkImportDialog = ({ open, onOpenChange, onImport }: BulkImportDia
               className="border-blue-300 text-blue-600 hover:bg-blue-100"
             >
               <Download className="h-4 w-4 mr-2" />
-              Download Template
+              Download CSV Template
             </Button>
           </div>
 
           {/* File Upload */}
           <div className="space-y-3">
-            <h4 className="font-medium">Step 2: Upload Your Excel File</h4>
+            <h4 className="font-medium">Step 2: Upload Your File</h4>
             <div className="space-y-2">
-              <Label htmlFor="excel-file">Select Excel File</Label>
+              <Label htmlFor="import-file">Select CSV or Excel File</Label>
               <Input
-                id="excel-file"
+                id="import-file"
                 type="file"
-                accept=".xlsx,.xls"
+                accept=".csv,.xlsx,.xls"
                 onChange={handleFileChange}
                 className="cursor-pointer"
               />
@@ -231,10 +291,10 @@ export const BulkImportDialog = ({ open, onOpenChange, onImport }: BulkImportDia
               onClick={handleClose}
             >
               {importResult ? 'Close' : 'Cancel'}
-            </Button>
+            </div>
             {!importResult && (
               <Button
-                onClick={processExcelFile}
+                onClick={processFile}
                 disabled={!file || isProcessing}
                 className="bg-green-600 hover:bg-green-700"
               >
