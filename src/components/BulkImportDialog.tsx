@@ -37,11 +37,16 @@ export const BulkImportDialog = ({ open, onOpenChange, onImport }: BulkImportDia
   const downloadTemplate = () => {
     const templateData = [
       {
-        'Epic Title': 'Example Epic',
-        'User Role': 'customer',
-        'Action': 'view my order history',
-        'Result': 'I can track my purchases',
-        'Acceptance Criteria (Optional)': 'Given I am logged in, When I click order history, Then I see my past orders'
+        'Theme': 'User Management',
+        'Epic': 'User Authentication',
+        'User Story': 'As a customer, I want to log into my account, so that I can access my personal information',
+        'Acceptance Criteria': 'Given I am on the login page, When I enter valid credentials, Then I should be redirected to my dashboard'
+      },
+      {
+        'Theme': 'User Management',
+        'Epic': 'User Authentication',
+        'User Story': 'As a customer, I want to reset my password, so that I can regain access to my account',
+        'Acceptance Criteria': 'Given I forgot my password, When I click reset password, Then I should receive a reset email'
       }
     ];
 
@@ -51,11 +56,10 @@ export const BulkImportDialog = ({ open, onOpenChange, onImport }: BulkImportDia
     
     // Set column widths
     worksheet['!cols'] = [
-      { wch: 20 }, // Epic Title
-      { wch: 15 }, // User Role
-      { wch: 30 }, // Action
-      { wch: 30 }, // Result
-      { wch: 50 }  // Acceptance Criteria
+      { wch: 20 }, // Theme
+      { wch: 20 }, // Epic
+      { wch: 50 }, // User Story
+      { wch: 60 }  // Acceptance Criteria
     ];
 
     XLSX.writeFile(workbook, 'user-stories-template.xlsx');
@@ -69,6 +73,27 @@ export const BulkImportDialog = ({ open, onOpenChange, onImport }: BulkImportDia
     }
   };
 
+  const parseUserStory = (userStoryText: string) => {
+    // Parse "As a [user], I want to [action], so that [result]" format
+    const regex = /As\s+a\s+([^,]+),\s*I\s+want\s+to\s+([^,]+),\s*so\s+that\s+(.+)/i;
+    const match = userStoryText.match(regex);
+    
+    if (match) {
+      return {
+        user: match[1].trim(),
+        action: match[2].trim(),
+        result: match[3].trim()
+      };
+    }
+    
+    // Fallback: treat the whole text as action if format doesn't match
+    return {
+      user: 'user',
+      action: userStoryText.trim(),
+      result: 'achieve the desired outcome'
+    };
+  };
+
   const processExcelFile = async () => {
     if (!file) return;
 
@@ -79,13 +104,18 @@ export const BulkImportDialog = ({ open, onOpenChange, onImport }: BulkImportDia
       const worksheet = workbook.Sheets[workbook.SheetNames[0]];
       const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
-      const importData: ImportData[] = jsonData.map((row: any) => ({
-        epic: row['Epic Title'] || '',
-        userStory: row['User Role'] || '',
-        action: row['Action'] || '',
-        result: row['Result'] || '',
-        acceptanceCriteria: row['Acceptance Criteria (Optional)'] || ''
-      })).filter(item => item.epic && item.userStory && item.action && item.result);
+      const importData: ImportData[] = jsonData.map((row: any) => {
+        const userStoryText = row['User Story'] || '';
+        const parsedUserStory = parseUserStory(userStoryText);
+        
+        return {
+          epic: row['Epic'] || '',
+          userStory: parsedUserStory.user,
+          action: parsedUserStory.action,
+          result: parsedUserStory.result,
+          acceptanceCriteria: row['Acceptance Criteria'] || ''
+        };
+      }).filter(item => item.epic && item.userStory && item.action && item.result);
 
       if (importData.length === 0) {
         toast({
@@ -128,7 +158,7 @@ export const BulkImportDialog = ({ open, onOpenChange, onImport }: BulkImportDia
         <DialogHeader>
           <DialogTitle>Bulk Import User Stories</DialogTitle>
           <DialogDescription>
-            Upload an Excel file to import multiple user stories at once. Download the template first to ensure proper formatting.
+            Upload an Excel file to import multiple user stories at once. The template format matches your CSV export structure.
           </DialogDescription>
         </DialogHeader>
 
@@ -137,7 +167,7 @@ export const BulkImportDialog = ({ open, onOpenChange, onImport }: BulkImportDia
           <div className="bg-blue-50 p-4 rounded-lg">
             <h4 className="font-medium text-blue-900 mb-2">Step 1: Download Template</h4>
             <p className="text-sm text-blue-700 mb-3">
-              Download the Excel template to ensure your data is formatted correctly.
+              Download the Excel template with the same format as your CSV exports (Theme, Epic, User Story, Acceptance Criteria).
             </p>
             <Button
               onClick={downloadTemplate}
@@ -168,6 +198,17 @@ export const BulkImportDialog = ({ open, onOpenChange, onImport }: BulkImportDia
                 {file.name}
               </div>
             )}
+          </div>
+
+          {/* Format Info */}
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h4 className="font-medium text-gray-900 mb-2">Expected Format</h4>
+            <div className="text-sm text-gray-700 space-y-1">
+              <p><strong>Theme:</strong> Theme title (will be ignored since you're importing to current theme)</p>
+              <p><strong>Epic:</strong> Epic title</p>
+              <p><strong>User Story:</strong> "As a [user], I want to [action], so that [result]"</p>
+              <p><strong>Acceptance Criteria:</strong> "Given [condition], When [action], Then [result]"</p>
+            </div>
           </div>
 
           {/* Import Results */}
