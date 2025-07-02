@@ -291,7 +291,7 @@ export const BulkImportDialog = ({ open, onOpenChange, onImport }: BulkImportDia
               onClick={handleClose}
             >
               {importResult ? 'Close' : 'Cancel'}
-            </div>
+            </Button>
             {!importResult && (
               <Button
                 onClick={processFile}
