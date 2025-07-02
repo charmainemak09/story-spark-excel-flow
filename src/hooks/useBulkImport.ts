@@ -22,20 +22,27 @@ export const useBulkImport = (themeId: string) => {
   const { toast } = useToast();
 
   const parseAcceptanceCriteria = (criteria: string) => {
+    console.log('Parsing acceptance criteria:', criteria);
+    
     // Parse "Given [condition], When [action], Then [result]" format
     const givenMatch = criteria.match(/Given\s+(.+?)(?=,\s*When|$)/i);
     const whenMatch = criteria.match(/When\s+(.+?)(?=,\s*Then|$)/i);
     const thenMatch = criteria.match(/Then\s+(.+?)$/i);
 
-    return {
+    const result = {
       given: givenMatch ? givenMatch[1].trim() : 'condition is met',
       when: whenMatch ? whenMatch[1].trim() : 'action is performed',
       then: thenMatch ? thenMatch[1].trim() : 'result is achieved'
     };
+    
+    console.log('Parsed acceptance criteria:', result);
+    return result;
   };
 
   const bulkImportMutation = useMutation({
     mutationFn: async (importData: ImportData[]): Promise<ImportResult> => {
+      console.log('Starting bulk import with data:', importData);
+      
       let newUserStories = 0;
       let duplicatesSkipped = 0;
       const totalRows = importData.length;
@@ -46,20 +53,27 @@ export const useBulkImport = (themeId: string) => {
         .select('id, title')
         .eq('theme_id', themeId);
 
+      console.log('Existing epics:', existingEpics);
+
       // Get existing user stories for duplicate detection
       const { data: existingUserStories } = await supabase
         .from('user_stories')
         .select('user_role, action, result, epic_id')
         .in('epic_id', existingEpics?.map(e => e.id) || []);
 
-      for (const item of importData) {
+      console.log('Existing user stories:', existingUserStories);
+
+      for (const [index, item] of importData.entries()) {
         try {
+          console.log(`Processing item ${index + 1}/${totalRows}:`, item);
+          
           // Find or create epic
           let epic = existingEpics?.find(e => 
             e.title.toLowerCase().trim() === item.epic.toLowerCase().trim()
           );
 
           if (!epic) {
+            console.log('Creating new epic:', item.epic);
             const { data: newEpic, error: epicError } = await supabase
               .from('epics')
               .insert([{
@@ -69,9 +83,13 @@ export const useBulkImport = (themeId: string) => {
               .select()
               .single();
 
-            if (epicError) throw epicError;
+            if (epicError) {
+              console.error('Error creating epic:', epicError);
+              throw epicError;
+            }
             epic = newEpic;
             existingEpics?.push(epic);
+            console.log('Created epic:', epic);
           }
 
           // Check for duplicate user story
@@ -83,11 +101,13 @@ export const useBulkImport = (themeId: string) => {
           );
 
           if (isDuplicate) {
+            console.log('Skipping duplicate user story:', item);
             duplicatesSkipped++;
             continue;
           }
 
           // Create user story
+          console.log('Creating user story for epic:', epic.id);
           const { data: newUserStory, error: userStoryError } = await supabase
             .from('user_stories')
             .insert([{
@@ -99,7 +119,12 @@ export const useBulkImport = (themeId: string) => {
             .select()
             .single();
 
-          if (userStoryError) throw userStoryError;
+          if (userStoryError) {
+            console.error('Error creating user story:', userStoryError);
+            throw userStoryError;
+          }
+
+          console.log('Created user story:', newUserStory);
 
           // Add to existing user stories for duplicate detection
           existingUserStories?.push({
@@ -113,9 +138,10 @@ export const useBulkImport = (themeId: string) => {
 
           // Create acceptance criteria if provided
           if (item.acceptanceCriteria && item.acceptanceCriteria.trim()) {
+            console.log('Creating acceptance criteria:', item.acceptanceCriteria);
             const parsedCriteria = parseAcceptanceCriteria(item.acceptanceCriteria.trim());
 
-            await supabase
+            const { error: criteriaError } = await supabase
               .from('acceptance_criteria')
               .insert([{
                 user_story_id: newUserStory.id,
@@ -123,6 +149,13 @@ export const useBulkImport = (themeId: string) => {
                 when_action: parsedCriteria.when,
                 then_result: parsedCriteria.then
               }]);
+
+            if (criteriaError) {
+              console.error('Error creating acceptance criteria:', criteriaError);
+              // Don't throw here, just log the error and continue
+            } else {
+              console.log('Created acceptance criteria successfully');
+            }
           }
 
         } catch (error) {
@@ -131,11 +164,14 @@ export const useBulkImport = (themeId: string) => {
         }
       }
 
-      return {
+      const result = {
         totalRows,
         newUserStories,
         duplicatesSkipped
       };
+      
+      console.log('Bulk import completed:', result);
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['themes'] });

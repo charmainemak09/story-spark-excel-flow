@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -101,7 +102,10 @@ export const BulkImportDialog = ({ open, onOpenChange, onImport }: BulkImportDia
       reader.onload = (e) => {
         try {
           const csv = e.target?.result as string;
+          console.log('Raw CSV content:', csv);
+          
           const lines = csv.split('\n').filter(line => line.trim());
+          console.log('CSV lines after filtering:', lines.length);
           
           if (lines.length < 2) {
             reject(new Error('CSV file must have at least a header row and one data row'));
@@ -109,48 +113,64 @@ export const BulkImportDialog = ({ open, onOpenChange, onImport }: BulkImportDia
           }
 
           // Parse header
-          const header = lines[0].split(',').map(h => h.replace(/"/g, '').trim());
+          const headerLine = lines[0];
+          const header = parseCSVLine(headerLine);
+          console.log('Parsed header:', header);
           
           // Parse data rows
-          const data = lines.slice(1).map(line => {
-            const values = [];
-            let current = '';
-            let inQuotes = false;
-            
-            for (let i = 0; i < line.length; i++) {
-              const char = line[i];
-              if (char === '"') {
-                if (inQuotes && line[i + 1] === '"') {
-                  current += '"';
-                  i++; // Skip next quote
-                } else {
-                  inQuotes = !inQuotes;
-                }
-              } else if (char === ',' && !inQuotes) {
-                values.push(current.trim());
-                current = '';
-              } else {
-                current += char;
-              }
+          const data = [];
+          for (let i = 1; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (line) {
+              const values = parseCSVLine(line);
+              console.log(`Parsing line ${i}:`, line);
+              console.log(`Parsed values:`, values);
+              
+              // Create object from header and values
+              const obj: any = {};
+              header.forEach((h, index) => {
+                obj[h] = values[index] || '';
+              });
+              data.push(obj);
             }
-            values.push(current.trim()); // Add last value
+          }
 
-            // Create object from header and values
-            const obj: any = {};
-            header.forEach((h, index) => {
-              obj[h] = values[index] || '';
-            });
-            return obj;
-          });
-
+          console.log('Final parsed data:', data);
           resolve(data);
         } catch (error) {
+          console.error('CSV parsing error:', error);
           reject(error);
         }
       };
       reader.onerror = () => reject(new Error('Failed to read CSV file'));
       reader.readAsText(file);
     });
+  };
+
+  const parseCSVLine = (line: string): string[] => {
+    const values = [];
+    let current = '';
+    let inQuotes = false;
+    
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      if (char === '"') {
+        if (inQuotes && line[i + 1] === '"') {
+          current += '"';
+          i++; // Skip next quote
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (char === ',' && !inQuotes) {
+        values.push(current.trim());
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    values.push(current.trim()); // Add last value
+    
+    return values;
   };
 
   const processFileForPreview = async () => {
@@ -169,18 +189,31 @@ export const BulkImportDialog = ({ open, onOpenChange, onImport }: BulkImportDia
         jsonData = XLSX.utils.sheet_to_json(worksheet);
       }
 
-      const importData: ImportData[] = jsonData.map((row: any) => {
+      console.log('Raw imported data:', jsonData);
+
+      const importData: ImportData[] = jsonData.map((row: any, index: number) => {
+        console.log(`Processing row ${index}:`, row);
+        
         const userStoryText = row['User Story'] || '';
         const parsedUserStory = parseUserStory(userStoryText);
         
-        return {
-          epic: row['Epic'] || '',
+        const result = {
+          epic: (row['Epic'] || '').toString().trim(),
           userStory: parsedUserStory.user,
           action: parsedUserStory.action,
           result: parsedUserStory.result,
-          acceptanceCriteria: row['Acceptance Criteria'] || ''
+          acceptanceCriteria: (row['Acceptance Criteria'] || '').toString().trim()
         };
-      }).filter(item => item.epic && item.userStory && item.action && item.result);
+        
+        console.log(`Processed row ${index}:`, result);
+        return result;
+      }).filter(item => {
+        const isValid = item.epic && item.userStory && item.action && item.result;
+        console.log('Item validation:', { item, isValid });
+        return isValid;
+      });
+
+      console.log('Final import data:', importData);
 
       if (importData.length === 0) {
         toast({
@@ -211,6 +244,7 @@ export const BulkImportDialog = ({ open, onOpenChange, onImport }: BulkImportDia
 
     setIsProcessing(true);
     try {
+      console.log('Starting import with data:', previewData);
       const result = await onImport(previewData);
       setImportResult(result);
       setCurrentStep('complete');
