@@ -43,7 +43,8 @@ export const BulkImportDialog = ({ open, onOpenChange, onImport }: BulkImportDia
     const templateData = [
       ['Theme', 'Epic', 'User Story', 'Acceptance Criteria'],
       ['User Management', 'User Authentication', 'As a customer, I want to log into my account, so that I can access my personal information', 'Given I am on the login page, When I enter valid credentials, Then I should be redirected to my dashboard'],
-      ['User Management', 'User Authentication', 'As a customer, I want to reset my password, so that I can regain access to my account', 'Given I forgot my password, When I click reset password, Then I should receive a reset email']
+      ['User Management', 'User Authentication', 'As a customer, I want to reset my password, so that I can regain access to my account', 'Given I forgot my password, When I click reset password, Then I should receive a reset email'],
+      ['Shopping Cart', 'Product Management', 'As a shopper, I want to add items to my cart, so that I can purchase multiple products at once', 'Given I am viewing a product, When I click add to cart, Then the item should be added to my shopping cart']
     ];
 
     // Convert to CSV string

@@ -21,6 +21,19 @@ export const useBulkImport = (themeId: string) => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
+  const parseAcceptanceCriteria = (criteria: string) => {
+    // Parse "Given [condition], When [action], Then [result]" format
+    const givenMatch = criteria.match(/Given\s+(.+?)(?=,\s*When|$)/i);
+    const whenMatch = criteria.match(/When\s+(.+?)(?=,\s*Then|$)/i);
+    const thenMatch = criteria.match(/Then\s+(.+?)$/i);
+
+    return {
+      given: givenMatch ? givenMatch[1].trim() : 'condition is met',
+      when: whenMatch ? whenMatch[1].trim() : 'action is performed',
+      then: thenMatch ? thenMatch[1].trim() : 'result is achieved'
+    };
+  };
+
   const bulkImportMutation = useMutation({
     mutationFn: async (importData: ImportData[]): Promise<ImportResult> => {
       let newUserStories = 0;
@@ -100,21 +113,15 @@ export const useBulkImport = (themeId: string) => {
 
           // Create acceptance criteria if provided
           if (item.acceptanceCriteria && item.acceptanceCriteria.trim()) {
-            const criteria = item.acceptanceCriteria.trim();
-            // Simple parsing - assumes format "Given X, When Y, Then Z"
-            const parts = criteria.split(/,\s*(?=When|Then)/i);
-            
-            const given = parts.find(p => p.toLowerCase().startsWith('given'))?.replace(/^given\s+/i, '') || criteria;
-            const when = parts.find(p => p.toLowerCase().startsWith('when'))?.replace(/^when\s+/i, '') || 'action is performed';
-            const then = parts.find(p => p.toLowerCase().startsWith('then'))?.replace(/^then\s+/i, '') || 'result is achieved';
+            const parsedCriteria = parseAcceptanceCriteria(item.acceptanceCriteria.trim());
 
             await supabase
               .from('acceptance_criteria')
               .insert([{
                 user_story_id: newUserStory.id,
-                given_condition: given,
-                when_action: when,
-                then_result: then
+                given_condition: parsedCriteria.given,
+                when_action: parsedCriteria.when,
+                then_result: parsedCriteria.then
               }]);
           }
 
