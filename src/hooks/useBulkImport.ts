@@ -24,15 +24,42 @@ export const useBulkImport = (themeId: string) => {
   const parseAcceptanceCriteria = (criteria: string) => {
     console.log('Parsing acceptance criteria:', criteria);
     
-    // Parse "Given [condition], When [action], Then [result]" format
-    const givenMatch = criteria.match(/Given\s+(.+?)(?=,\s*When|$)/i);
-    const whenMatch = criteria.match(/When\s+(.+?)(?=,\s*Then|$)/i);
-    const thenMatch = criteria.match(/Then\s+(.+?)$/i);
+    if (!criteria || criteria.trim() === '') {
+      console.log('No acceptance criteria provided');
+      return null;
+    }
+
+    const trimmedCriteria = criteria.trim();
+    
+    // Enhanced regex to handle "Given..., When..., Then..." format with flexible punctuation
+    const givenMatch = trimmedCriteria.match(/Given\s+([^,]+?)(?:,\s*When|$)/i);
+    const whenMatch = trimmedCriteria.match(/When\s+([^,]+?)(?:,\s*Then|$)/i);
+    const thenMatch = trimmedCriteria.match(/Then\s+(.+?)$/i);
+
+    let given = 'condition is met';
+    let when = 'action is performed'; 
+    let then = 'result is achieved';
+
+    if (givenMatch && givenMatch[1]) {
+      given = givenMatch[1].trim();
+    }
+    if (whenMatch && whenMatch[1]) {
+      when = whenMatch[1].trim();
+    }
+    if (thenMatch && thenMatch[1]) {
+      then = thenMatch[1].trim();
+    }
+
+    // If none of the patterns match, try to extract meaningful parts or use the whole text as "then"
+    if (!givenMatch && !whenMatch && !thenMatch) {
+      console.log('No standard Given/When/Then format found, using entire text as Then clause');
+      then = trimmedCriteria;
+    }
 
     const result = {
-      given: givenMatch ? givenMatch[1].trim() : 'condition is met',
-      when: whenMatch ? whenMatch[1].trim() : 'action is performed',
-      then: thenMatch ? thenMatch[1].trim() : 'result is achieved'
+      given,
+      when,
+      then
     };
     
     console.log('Parsed acceptance criteria:', result);
@@ -138,24 +165,38 @@ export const useBulkImport = (themeId: string) => {
 
           // Create acceptance criteria if provided
           if (item.acceptanceCriteria && item.acceptanceCriteria.trim()) {
-            console.log('Creating acceptance criteria:', item.acceptanceCriteria);
+            console.log('Processing acceptance criteria:', item.acceptanceCriteria);
             const parsedCriteria = parseAcceptanceCriteria(item.acceptanceCriteria.trim());
 
-            const { error: criteriaError } = await supabase
-              .from('acceptance_criteria')
-              .insert([{
-                user_story_id: newUserStory.id,
-                given_condition: parsedCriteria.given,
-                when_action: parsedCriteria.when,
-                then_result: parsedCriteria.then
-              }]);
+            if (parsedCriteria) {
+              console.log('Creating acceptance criteria with parsed data:', parsedCriteria);
+              const { data: newCriteria, error: criteriaError } = await supabase
+                .from('acceptance_criteria')
+                .insert([{
+                  user_story_id: newUserStory.id,
+                  given_condition: parsedCriteria.given,
+                  when_action: parsedCriteria.when,
+                  then_result: parsedCriteria.then
+                }])
+                .select()
+                .single();
 
-            if (criteriaError) {
-              console.error('Error creating acceptance criteria:', criteriaError);
-              // Don't throw here, just log the error and continue
+              if (criteriaError) {
+                console.error('Error creating acceptance criteria:', criteriaError);
+                console.error('Attempted to insert:', {
+                  user_story_id: newUserStory.id,
+                  given_condition: parsedCriteria.given,
+                  when_action: parsedCriteria.when,
+                  then_result: parsedCriteria.then
+                });
+              } else {
+                console.log('Successfully created acceptance criteria:', newCriteria);
+              }
             } else {
-              console.log('Created acceptance criteria successfully');
+              console.log('Skipping acceptance criteria - parsing returned null');
             }
+          } else {
+            console.log('No acceptance criteria provided for this user story');
           }
 
         } catch (error) {
