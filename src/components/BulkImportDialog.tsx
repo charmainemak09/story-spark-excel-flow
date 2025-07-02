@@ -1,11 +1,11 @@
-
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Upload, Download, FileSpreadsheet } from 'lucide-react';
+import { Upload, Download, FileSpreadsheet, ArrowLeft, ArrowRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { ImportPreviewTable } from './ImportPreviewTable';
 import * as XLSX from 'xlsx';
 
 interface BulkImportDialogProps {
@@ -28,10 +28,14 @@ interface ImportResult {
   duplicatesSkipped: number;
 }
 
+type ImportStep = 'upload' | 'preview' | 'complete';
+
 export const BulkImportDialog = ({ open, onOpenChange, onImport }: BulkImportDialogProps) => {
   const [file, setFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
+  const [currentStep, setCurrentStep] = useState<ImportStep>('upload');
+  const [previewData, setPreviewData] = useState<ImportData[]>([]);
   const { toast } = useToast();
 
   const downloadTemplate = () => {
@@ -64,6 +68,8 @@ export const BulkImportDialog = ({ open, onOpenChange, onImport }: BulkImportDia
     if (selectedFile) {
       setFile(selectedFile);
       setImportResult(null);
+      setCurrentStep('upload');
+      setPreviewData([]);
     }
   };
 
@@ -146,7 +152,7 @@ export const BulkImportDialog = ({ open, onOpenChange, onImport }: BulkImportDia
     });
   };
 
-  const processFile = async () => {
+  const processFileForPreview = async () => {
     if (!file) return;
 
     setIsProcessing(true);
@@ -154,10 +160,8 @@ export const BulkImportDialog = ({ open, onOpenChange, onImport }: BulkImportDia
       let jsonData: any[] = [];
 
       if (file.name.toLowerCase().endsWith('.csv')) {
-        // Handle CSV file
         jsonData = await parseCSVFile(file);
       } else {
-        // Handle Excel file
         const arrayBuffer = await file.arrayBuffer();
         const workbook = XLSX.read(arrayBuffer);
         const worksheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -186,13 +190,8 @@ export const BulkImportDialog = ({ open, onOpenChange, onImport }: BulkImportDia
         return;
       }
 
-      const result = await onImport(importData);
-      setImportResult(result);
-
-      toast({
-        title: "Import Completed",
-        description: `Processed ${result.totalRows} rows. ${result.newUserStories} new user stories added, ${result.duplicatesSkipped} duplicates skipped.`,
-      });
+      setPreviewData(importData);
+      setCurrentStep('preview');
 
     } catch (error) {
       console.error('Import error:', error);
@@ -206,73 +205,130 @@ export const BulkImportDialog = ({ open, onOpenChange, onImport }: BulkImportDia
     }
   };
 
+  const confirmImport = async () => {
+    if (previewData.length === 0) return;
+
+    setIsProcessing(true);
+    try {
+      const result = await onImport(previewData);
+      setImportResult(result);
+      setCurrentStep('complete');
+
+      toast({
+        title: "Import Completed",
+        description: `Processed ${result.totalRows} rows. ${result.newUserStories} new user stories added, ${result.duplicatesSkipped} duplicates skipped.`,
+      });
+
+    } catch (error) {
+      console.error('Import error:', error);
+      toast({
+        title: "Import Failed",
+        description: "Failed to import the data. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   const handleClose = () => {
     setFile(null);
     setImportResult(null);
+    setCurrentStep('upload');
+    setPreviewData([]);
     onOpenChange(false);
+  };
+
+  const handleBack = () => {
+    if (currentStep === 'preview') {
+      setCurrentStep('upload');
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[900px] max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Bulk Import User Stories</DialogTitle>
+          <DialogTitle>
+            {currentStep === 'upload' && 'Bulk Import User Stories'}
+            {currentStep === 'preview' && 'Review Import Data'}
+            {currentStep === 'complete' && 'Import Complete'}
+          </DialogTitle>
           <DialogDescription>
-            Upload a CSV or Excel file to import multiple user stories at once. The format matches your CSV export structure.
+            {currentStep === 'upload' && 'Upload a CSV or Excel file to import multiple user stories at once.'}
+            {currentStep === 'preview' && 'Review and edit the imported data before adding it to your workspace.'}
+            {currentStep === 'complete' && 'Your user stories have been successfully imported.'}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Template Download */}
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <h4 className="font-medium text-blue-900 mb-2">Step 1: Download Template</h4>
-            <p className="text-sm text-blue-700 mb-3">
-              Download the CSV template with the same format as your CSV exports (Theme, Epic, User Story, Acceptance Criteria).
-            </p>
-            <Button
-              onClick={downloadTemplate}
-              variant="outline"
-              className="border-blue-300 text-blue-600 hover:bg-blue-100"
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Download CSV Template
-            </Button>
-          </div>
+          {currentStep === 'upload' && (
+            <>
+              {/* Template Download */}
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <h4 className="font-medium text-blue-900 mb-2">Step 1: Download Template</h4>
+                <p className="text-sm text-blue-700 mb-3">
+                  Download the CSV template with the same format as your CSV exports (Theme, Epic, User Story, Acceptance Criteria).
+                </p>
+                <Button
+                  onClick={downloadTemplate}
+                  variant="outline"
+                  className="border-blue-300 text-blue-600 hover:bg-blue-100"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download CSV Template
+                </Button>
+              </div>
 
-          {/* File Upload */}
-          <div className="space-y-3">
-            <h4 className="font-medium">Step 2: Upload Your File</h4>
-            <div className="space-y-2">
-              <Label htmlFor="import-file">Select CSV or Excel File</Label>
-              <Input
-                id="import-file"
-                type="file"
-                accept=".csv,.xlsx,.xls"
-                onChange={handleFileChange}
-                className="cursor-pointer"
+              {/* File Upload */}
+              <div className="space-y-3">
+                <h4 className="font-medium">Step 2: Upload Your File</h4>
+                <div className="space-y-2">
+                  <Label htmlFor="import-file">Select CSV or Excel File</Label>
+                  <Input
+                    id="import-file"
+                    type="file"
+                    accept=".csv,.xlsx,.xls"
+                    onChange={handleFileChange}
+                    className="cursor-pointer"
+                  />
+                </div>
+                {file && (
+                  <div className="flex items-center gap-2 text-sm text-green-600">
+                    <FileSpreadsheet className="h-4 w-4" />
+                    {file.name}
+                  </div>
+                )}
+              </div>
+
+              {/* Format Info */}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h4 className="font-medium text-gray-900 mb-2">Expected Format</h4>
+                <div className="text-sm text-gray-700 space-y-1">
+                  <p><strong>Theme:</strong> Theme title (will be ignored since you're importing to current theme)</p>
+                  <p><strong>Epic:</strong> Epic title</p>
+                  <p><strong>User Story:</strong> "As a [user], I want to [action], so that [result]"</p>
+                  <p><strong>Acceptance Criteria:</strong> "Given [condition], When [action], Then [result]"</p>
+                </div>
+              </div>
+            </>
+          )}
+
+          {currentStep === 'preview' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-gray-600">
+                  {previewData.length} user stories ready for import. You can edit or remove items before importing.
+                </p>
+              </div>
+              <ImportPreviewTable 
+                data={previewData} 
+                onDataChange={setPreviewData}
               />
             </div>
-            {file && (
-              <div className="flex items-center gap-2 text-sm text-green-600">
-                <FileSpreadsheet className="h-4 w-4" />
-                {file.name}
-              </div>
-            )}
-          </div>
+          )}
 
-          {/* Format Info */}
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h4 className="font-medium text-gray-900 mb-2">Expected Format</h4>
-            <div className="text-sm text-gray-700 space-y-1">
-              <p><strong>Theme:</strong> Theme title (will be ignored since you're importing to current theme)</p>
-              <p><strong>Epic:</strong> Epic title</p>
-              <p><strong>User Story:</strong> "As a [user], I want to [action], so that [result]"</p>
-              <p><strong>Acceptance Criteria:</strong> "Given [condition], When [action], Then [result]"</p>
-            </div>
-          </div>
-
-          {/* Import Results */}
-          {importResult && (
+          {currentStep === 'complete' && importResult && (
             <div className="bg-green-50 p-4 rounded-lg">
               <h4 className="font-medium text-green-900 mb-2">Import Summary</h4>
               <div className="space-y-1 text-sm text-green-700">
@@ -284,33 +340,66 @@ export const BulkImportDialog = ({ open, onOpenChange, onImport }: BulkImportDia
           )}
 
           {/* Action Buttons */}
-          <div className="flex justify-end space-x-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-            >
-              {importResult ? 'Close' : 'Cancel'}
-            </Button>
-            {!importResult && (
+          <div className="flex justify-between">
+            <div>
+              {currentStep === 'preview' && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleBack}
+                >
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back
+                </Button>
+              )}
+            </div>
+            <div className="flex space-x-2">
               <Button
-                onClick={processFile}
-                disabled={!file || isProcessing}
-                className="bg-green-600 hover:bg-green-700"
+                type="button"
+                variant="outline"
+                onClick={handleClose}
               >
-                {isProcessing ? (
-                  <>
-                    <Upload className="h-4 w-4 mr-2 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="h-4 w-4 mr-2" />
-                    Import Data
-                  </>
-                )}
+                {currentStep === 'complete' ? 'Close' : 'Cancel'}
               </Button>
-            )}
+              {currentStep === 'upload' && (
+                <Button
+                  onClick={processFileForPreview}
+                  disabled={!file || isProcessing}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  {isProcessing ? (
+                    <>
+                      <Upload className="h-4 w-4 mr-2 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <ArrowRight className="h-4 w-4 mr-2" />
+                      Preview Data
+                    </>
+                  )}
+                </Button>
+              )}
+              {currentStep === 'preview' && (
+                <Button
+                  onClick={confirmImport}
+                  disabled={previewData.length === 0 || isProcessing}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  {isProcessing ? (
+                    <>
+                      <Upload className="h-4 w-4 mr-2 animate-spin" />
+                      Importing...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="h-4 w-4 mr-2" />
+                      Import {previewData.length} User Stories
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </DialogContent>
