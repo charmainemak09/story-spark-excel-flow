@@ -82,13 +82,23 @@ export const useBulkImport = (themeId: string) => {
 
       console.log('Existing epics:', existingEpics);
 
-      // Get existing user stories for duplicate detection
+      // Get existing user stories with their acceptance criteria for more accurate duplicate detection
       const { data: existingUserStories } = await supabase
         .from('user_stories')
-        .select('user_role, action, result, epic_id')
+        .select(`
+          user_role, 
+          action, 
+          result, 
+          epic_id,
+          acceptance_criteria (
+            given_condition,
+            when_action,
+            then_result
+          )
+        `)
         .in('epic_id', existingEpics?.map(e => e.id) || []);
 
-      console.log('Existing user stories:', existingUserStories);
+      console.log('Existing user stories with acceptance criteria:', existingUserStories);
 
       for (const [index, item] of importData.entries()) {
         try {
@@ -119,13 +129,38 @@ export const useBulkImport = (themeId: string) => {
             console.log('Created epic:', epic);
           }
 
-          // Check for duplicate user story
-          const isDuplicate = existingUserStories?.some(us => 
-            us.epic_id === epic?.id &&
-            us.user_role.toLowerCase().trim() === item.userStory.toLowerCase().trim() &&
-            us.action.toLowerCase().trim() === item.action.toLowerCase().trim() &&
-            us.result.toLowerCase().trim() === item.result.toLowerCase().trim()
-          );
+          // Parse acceptance criteria for comparison
+          const parsedCriteria = item.acceptanceCriteria ? 
+            parseAcceptanceCriteria(item.acceptanceCriteria.trim()) : null;
+
+          // Enhanced duplicate detection that considers acceptance criteria
+          const isDuplicate = existingUserStories?.some(us => {
+            const basicMatch = us.epic_id === epic?.id &&
+              us.user_role.toLowerCase().trim() === item.userStory.toLowerCase().trim() &&
+              us.action.toLowerCase().trim() === item.action.toLowerCase().trim() &&
+              us.result.toLowerCase().trim() === item.result.toLowerCase().trim();
+
+            if (!basicMatch) return false;
+
+            // If both have no acceptance criteria, it's a duplicate
+            if (!parsedCriteria && (!us.acceptance_criteria || us.acceptance_criteria.length === 0)) {
+              return true;
+            }
+
+            // If one has acceptance criteria and the other doesn't, they're different
+            if (!parsedCriteria || !us.acceptance_criteria || us.acceptance_criteria.length === 0) {
+              return false;
+            }
+
+            // Compare acceptance criteria content
+            const existingCriteria = us.acceptance_criteria[0];
+            const criteriaMatch = existingCriteria &&
+              existingCriteria.given_condition.toLowerCase().trim() === parsedCriteria.given.toLowerCase().trim() &&
+              existingCriteria.when_action.toLowerCase().trim() === parsedCriteria.when.toLowerCase().trim() &&
+              existingCriteria.then_result.toLowerCase().trim() === parsedCriteria.then.toLowerCase().trim();
+
+            return criteriaMatch;
+          });
 
           if (isDuplicate) {
             console.log('Skipping duplicate user story:', item);
@@ -153,12 +188,13 @@ export const useBulkImport = (themeId: string) => {
 
           console.log('Created user story:', newUserStory);
 
-          // Add to existing user stories for duplicate detection
+          // Add to existing user stories for duplicate detection in subsequent iterations
           existingUserStories?.push({
             user_role: item.userStory.trim(),
             action: item.action.trim(),
             result: item.result.trim(),
-            epic_id: epic.id
+            epic_id: epic.id,
+            acceptance_criteria: []
           });
 
           newUserStories++;
@@ -166,7 +202,6 @@ export const useBulkImport = (themeId: string) => {
           // Create acceptance criteria if provided
           if (item.acceptanceCriteria && item.acceptanceCriteria.trim()) {
             console.log('Processing acceptance criteria:', item.acceptanceCriteria);
-            const parsedCriteria = parseAcceptanceCriteria(item.acceptanceCriteria.trim());
 
             if (parsedCriteria) {
               console.log('Creating acceptance criteria with parsed data:', parsedCriteria);
@@ -191,6 +226,15 @@ export const useBulkImport = (themeId: string) => {
                 });
               } else {
                 console.log('Successfully created acceptance criteria:', newCriteria);
+                // Update the existing user stories array with the new acceptance criteria
+                const lastUserStory = existingUserStories?.[existingUserStories.length - 1];
+                if (lastUserStory) {
+                  lastUserStory.acceptance_criteria = [{
+                    given_condition: parsedCriteria.given,
+                    when_action: parsedCriteria.when,
+                    then_result: parsedCriteria.then
+                  }];
+                }
               }
             } else {
               console.log('Skipping acceptance criteria - parsing returned null');
