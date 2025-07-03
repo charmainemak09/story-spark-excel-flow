@@ -9,7 +9,7 @@ import { AddThemeDialog } from "@/components/AddThemeDialog";
 import { useState } from "react";
 
 const Dashboard = () => {
-  const { data: themes = [], isLoading } = useThemes();
+  const { themes = [], isLoading } = useThemes();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
   const recentThemes = themes.slice(0, 3);
@@ -85,7 +85,11 @@ const Dashboard = () => {
           </Card>
         )}
 
-        <AddThemeDialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} />
+        <AddThemeDialog 
+          open={isAddDialogOpen} 
+          onOpenChange={setIsAddDialogOpen}
+          onAdd={() => setIsAddDialogOpen(false)}
+        />
       </div>
     </AuthenticatedLayout>
   );
