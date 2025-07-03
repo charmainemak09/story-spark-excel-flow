@@ -33,15 +33,28 @@ const Chat = () => {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const messageToSend = input.trim();
     setInput('');
     setIsLoading(true);
 
     try {
+      console.log('Sending message to chat function:', messageToSend);
+      
       const { data, error } = await supabase.functions.invoke('chat-with-ai', {
-        body: { message: input.trim() }
+        body: { message: messageToSend }
       });
 
-      if (error) throw error;
+      console.log('Function response:', { data, error });
+
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw new Error(error.message || 'Failed to get response from AI');
+      }
+
+      if (!data || !data.response) {
+        console.error('No response data:', data);
+        throw new Error('No response received from AI');
+      }
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -55,7 +68,7 @@ const Chat = () => {
       console.error('Error sending message:', error);
       toast({
         title: "Error",
-        description: "Failed to send message. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to send message. Please try again.",
         variant: "destructive",
       });
     } finally {

@@ -16,13 +16,20 @@ serve(async (req) => {
   }
 
   try {
+    console.log('Chat function called');
+    
     if (!openAIApiKey) {
+      console.error('OpenAI API key is not configured');
       throw new Error('OpenAI API key is not configured');
     }
 
-    const { message } = await req.json();
+    const requestBody = await req.json();
+    console.log('Request body:', requestBody);
+    
+    const { message } = requestBody;
 
     if (!message) {
+      console.error('Message is required');
       throw new Error('Message is required');
     }
 
@@ -48,14 +55,23 @@ serve(async (req) => {
       }),
     });
 
+    console.log('OpenAI response status:', response.status);
+
     if (!response.ok) {
-      const errorData = await response.json();
-      console.error('OpenAI API error:', errorData);
-      throw new Error(`OpenAI API error: ${response.status}`);
+      const errorText = await response.text();
+      console.error('OpenAI API error:', response.status, errorText);
+      throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
-    const aiResponse = data.choices[0].message.content;
+    console.log('OpenAI response data:', data);
+    
+    const aiResponse = data.choices?.[0]?.message?.content;
+
+    if (!aiResponse) {
+      console.error('No response from OpenAI');
+      throw new Error('No response received from OpenAI');
+    }
 
     console.log('OpenAI response:', aiResponse);
 
