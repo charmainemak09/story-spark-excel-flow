@@ -86,6 +86,7 @@ export const useBulkImport = (themeId: string) => {
       const { data: existingUserStories } = await supabase
         .from('user_stories')
         .select(`
+          id,
           user_role, 
           action, 
           result, 
@@ -100,22 +101,36 @@ export const useBulkImport = (themeId: string) => {
 
       console.log('Existing user stories with acceptance criteria:', existingUserStories);
 
-      for (const [index, item] of importData.entries()) {
+      // Group import data by user story (same epic, user, action, result)
+      const groupedData = new Map<string, ImportData[]>();
+      
+      for (const item of importData) {
+        const key = `${item.epic}|${item.userStory}|${item.action}|${item.result}`;
+        if (!groupedData.has(key)) {
+          groupedData.set(key, []);
+        }
+        groupedData.get(key)!.push(item);
+      }
+
+      console.log('Grouped data:', groupedData);
+
+      for (const [groupKey, groupItems] of groupedData.entries()) {
         try {
-          console.log(`Processing item ${index + 1}/${totalRows}:`, item);
+          const firstItem = groupItems[0];
+          console.log(`Processing group: ${groupKey} with ${groupItems.length} items`);
           
           // Find or create epic
           let epic = existingEpics?.find(e => 
-            e.title.toLowerCase().trim() === item.epic.toLowerCase().trim()
+            e.title.toLowerCase().trim() === firstItem.epic.toLowerCase().trim()
           );
 
           if (!epic) {
-            console.log('Creating new epic:', item.epic);
+            console.log('Creating new epic:', firstItem.epic);
             const { data: newEpic, error: epicError } = await supabase
               .from('epics')
               .insert([{
                 theme_id: themeId,
-                title: item.epic.trim()
+                title: firstItem.epic.trim()
               }])
               .select()
               .single();
@@ -129,123 +144,100 @@ export const useBulkImport = (themeId: string) => {
             console.log('Created epic:', epic);
           }
 
-          // Parse acceptance criteria for comparison
-          const parsedCriteria = item.acceptanceCriteria ? 
-            parseAcceptanceCriteria(item.acceptanceCriteria.trim()) : null;
+          // Check if user story already exists
+          const existingUserStory = existingUserStories?.find(us => 
+            us.epic_id === epic?.id &&
+            us.user_role.toLowerCase().trim() === firstItem.userStory.toLowerCase().trim() &&
+            us.action.toLowerCase().trim() === firstItem.action.toLowerCase().trim() &&
+            us.result.toLowerCase().trim() === firstItem.result.toLowerCase().trim()
+          );
 
-          // Enhanced duplicate detection that considers acceptance criteria
-          const isDuplicate = existingUserStories?.some(us => {
-            const basicMatch = us.epic_id === epic?.id &&
-              us.user_role.toLowerCase().trim() === item.userStory.toLowerCase().trim() &&
-              us.action.toLowerCase().trim() === item.action.toLowerCase().trim() &&
-              us.result.toLowerCase().trim() === item.result.toLowerCase().trim();
+          let userStoryId: string;
 
-            if (!basicMatch) return false;
+          if (existingUserStory) {
+            console.log('Found existing user story:', existingUserStory.id);
+            userStoryId = existingUserStory.id;
+          } else {
+            // Create new user story
+            console.log('Creating user story for epic:', epic.id);
+            const { data: newUserStory, error: userStoryError } = await supabase
+              .from('user_stories')
+              .insert([{
+                epic_id: epic.id,
+                user_role: firstItem.userStory.trim(),
+                action: firstItem.action.trim(),
+                result: firstItem.result.trim()
+              }])
+              .select()
+              .single();
 
-            // If both have no acceptance criteria, it's a duplicate
-            if (!parsedCriteria && (!us.acceptance_criteria || us.acceptance_criteria.length === 0)) {
-              return true;
+            if (userStoryError) {
+              console.error('Error creating user story:', userStoryError);
+              throw userStoryError;
             }
 
-            // If one has acceptance criteria and the other doesn't, they're different
-            if (!parsedCriteria || !us.acceptance_criteria || us.acceptance_criteria.length === 0) {
-              return false;
-            }
+            console.log('Created user story:', newUserStory);
+            userStoryId = newUserStory.id;
+            newUserStories++;
 
-            // Compare acceptance criteria content
-            const existingCriteria = us.acceptance_criteria[0];
-            const criteriaMatch = existingCriteria &&
-              existingCriteria.given_condition.toLowerCase().trim() === parsedCriteria.given.toLowerCase().trim() &&
-              existingCriteria.when_action.toLowerCase().trim() === parsedCriteria.when.toLowerCase().trim() &&
-              existingCriteria.then_result.toLowerCase().trim() === parsedCriteria.then.toLowerCase().trim();
-
-            return criteriaMatch;
-          });
-
-          if (isDuplicate) {
-            console.log('Skipping duplicate user story:', item);
-            duplicatesSkipped++;
-            continue;
-          }
-
-          // Create user story
-          console.log('Creating user story for epic:', epic.id);
-          const { data: newUserStory, error: userStoryError } = await supabase
-            .from('user_stories')
-            .insert([{
+            // Add to existing user stories for tracking
+            existingUserStories?.push({
+              id: userStoryId,
+              user_role: firstItem.userStory.trim(),
+              action: firstItem.action.trim(),
+              result: firstItem.result.trim(),
               epic_id: epic.id,
-              user_role: item.userStory.trim(),
-              action: item.action.trim(),
-              result: item.result.trim()
-            }])
-            .select()
-            .single();
-
-          if (userStoryError) {
-            console.error('Error creating user story:', userStoryError);
-            throw userStoryError;
+              acceptance_criteria: []
+            });
           }
 
-          console.log('Created user story:', newUserStory);
+          // Process acceptance criteria for this user story
+          for (const item of groupItems) {
+            if (item.acceptanceCriteria && item.acceptanceCriteria.trim()) {
+              const parsedCriteria = parseAcceptanceCriteria(item.acceptanceCriteria.trim());
+              
+              if (parsedCriteria) {
+                // Check if this exact acceptance criteria already exists for this user story
+                const existingCriteria = existingUserStory?.acceptance_criteria?.find(ac =>
+                  ac.given_condition.toLowerCase().trim() === parsedCriteria.given.toLowerCase().trim() &&
+                  ac.when_action.toLowerCase().trim() === parsedCriteria.when.toLowerCase().trim() &&
+                  ac.then_result.toLowerCase().trim() === parsedCriteria.then.toLowerCase().trim()
+                );
 
-          // Add to existing user stories for duplicate detection in subsequent iterations
-          existingUserStories?.push({
-            user_role: item.userStory.trim(),
-            action: item.action.trim(),
-            result: item.result.trim(),
-            epic_id: epic.id,
-            acceptance_criteria: []
-          });
+                if (existingCriteria) {
+                  console.log('Skipping duplicate acceptance criteria:', parsedCriteria);
+                  duplicatesSkipped++;
+                  continue;
+                }
 
-          newUserStories++;
-
-          // Create acceptance criteria if provided
-          if (item.acceptanceCriteria && item.acceptanceCriteria.trim()) {
-            console.log('Processing acceptance criteria:', item.acceptanceCriteria);
-
-            if (parsedCriteria) {
-              console.log('Creating acceptance criteria with parsed data:', parsedCriteria);
-              const { data: newCriteria, error: criteriaError } = await supabase
-                .from('acceptance_criteria')
-                .insert([{
-                  user_story_id: newUserStory.id,
-                  given_condition: parsedCriteria.given,
-                  when_action: parsedCriteria.when,
-                  then_result: parsedCriteria.then
-                }])
-                .select()
-                .single();
-
-              if (criteriaError) {
-                console.error('Error creating acceptance criteria:', criteriaError);
-                console.error('Attempted to insert:', {
-                  user_story_id: newUserStory.id,
-                  given_condition: parsedCriteria.given,
-                  when_action: parsedCriteria.when,
-                  then_result: parsedCriteria.then
-                });
-              } else {
-                console.log('Successfully created acceptance criteria:', newCriteria);
-                // Update the existing user stories array with the new acceptance criteria
-                const lastUserStory = existingUserStories?.[existingUserStories.length - 1];
-                if (lastUserStory) {
-                  lastUserStory.acceptance_criteria = [{
+                console.log('Creating acceptance criteria with parsed data:', parsedCriteria);
+                const { data: newCriteria, error: criteriaError } = await supabase
+                  .from('acceptance_criteria')
+                  .insert([{
+                    user_story_id: userStoryId,
                     given_condition: parsedCriteria.given,
                     when_action: parsedCriteria.when,
                     then_result: parsedCriteria.then
-                  }];
+                  }])
+                  .select()
+                  .single();
+
+                if (criteriaError) {
+                  console.error('Error creating acceptance criteria:', criteriaError);
+                } else {
+                  console.log('Successfully created acceptance criteria:', newCriteria);
                 }
+              } else {
+                console.log('Skipping acceptance criteria - parsing returned null');
               }
             } else {
-              console.log('Skipping acceptance criteria - parsing returned null');
+              console.log('No acceptance criteria provided for this item');
             }
-          } else {
-            console.log('No acceptance criteria provided for this user story');
           }
 
         } catch (error) {
-          console.error('Error processing row:', item, error);
-          // Continue processing other rows even if one fails
+          console.error('Error processing group:', groupKey, error);
+          // Continue processing other groups even if one fails
         }
       }
 
