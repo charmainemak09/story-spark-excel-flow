@@ -1,7 +1,7 @@
 
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "./ui/button";
-import { LogOut, BookOpen, Target, Home } from "lucide-react";
+import { LogOut, BookOpen, Target, Home, MessageSquare } from "lucide-react";
 import { ReactNode, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -40,6 +40,7 @@ export const AuthenticatedLayout = ({ children }: AuthenticatedLayoutProps) => {
   const navItems = [
     { path: '/', label: 'Dashboard', icon: Home },
     { path: '/themes', label: 'Themes', icon: BookOpen },
+    { path: '/chat', label: 'AI Chatbot', icon: MessageSquare },
   ];
 
   return (

@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Send, Bot, User } from 'lucide-react';
+import { Send, Bot, User, Copy, Download } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -21,6 +21,39 @@ const Chat = () => {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+
+  const copyConversation = () => {
+    const conversationText = messages
+      .map(msg => `${msg.role === 'user' ? 'You' : 'AI'}: ${msg.content}`)
+      .join('\n\n');
+    
+    navigator.clipboard.writeText(conversationText);
+    toast({
+      title: "Copied!",
+      description: "Conversation copied to clipboard",
+    });
+  };
+
+  const exportConversation = () => {
+    const conversationText = messages
+      .map(msg => `${msg.role === 'user' ? 'You' : 'AI'}: ${msg.content}\n${msg.timestamp.toLocaleString()}\n`)
+      .join('\n---\n\n');
+    
+    const blob = new Blob([conversationText], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ai-chat-${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    toast({
+      title: "Exported!",
+      description: "Conversation exported as text file",
+    });
+  };
 
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return;
@@ -88,10 +121,39 @@ const Chat = () => {
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <Card className="h-[600px] flex flex-col">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Bot className="h-6 w-6" />
-              AI Chat Assistant
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Bot className="h-6 w-6" />
+                AI Chatbot
+              </div>
+              {messages.length > 0 && (
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={copyConversation}
+                    className="flex items-center gap-2"
+                  >
+                    <Copy className="h-4 w-4" />
+                    Copy
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={exportConversation}
+                    className="flex items-center gap-2"
+                  >
+                    <Download className="h-4 w-4" />
+                    Export
+                  </Button>
+                </div>
+              )}
             </CardTitle>
+            <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mt-4 rounded">
+              <p className="text-sm text-blue-800">
+                This AI-powered chatbot is designed to help you quickly generate structured user stories and acceptance criteria. To get started, simply provide the problem statement and project objective — the assistant will guide you in translating them into well-formatted Agile stories.
+              </p>
+            </div>
           </CardHeader>
           
           <CardContent className="flex-1 flex flex-col p-0">
