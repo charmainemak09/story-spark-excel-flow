@@ -173,8 +173,8 @@ export const UserStoryCard = ({
 
   return (
     <Card 
-      className={`border border-green-200 bg-green-50 transition-all duration-200 ${
-        isDragOver ? 'ring-2 ring-green-400 shadow-md' : ''
+      className={`border-secondary/30 bg-secondary/10 transition-all duration-200 ${
+        isDragOver ? 'ring-2 ring-secondary/50 shadow-md' : ''
       }`}
       draggable
       onDragStart={handleDragStart}
@@ -186,21 +186,21 @@ export const UserStoryCard = ({
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-2 flex-1">
             <div className="cursor-grab active:cursor-grabbing flex-shrink-0 pt-1">
-              <GripVertical className="h-4 w-4 text-green-400" />
+              <GripVertical className="h-4 w-4 text-secondary/60" />
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
-                <Badge variant="secondary" className="bg-green-100 text-green-800 text-xs">
+                <Badge variant="secondary" className="text-xs">
                   USER STORY
                 </Badge>
-                <Badge variant="outline" className="border-green-300 text-green-700 text-xs">
+                <Badge variant="outline" className="text-xs">
                   {userStory.acceptanceCriteria.length} AC
                 </Badge>
               </div>
-              <p className="text-sm text-green-900 font-medium whitespace-pre-wrap">
-                As a <span className="font-semibold text-green-800">{userStory.user}</span>, 
-                I want to <span className="font-semibold text-green-800">{userStory.action}</span>, 
-                so that <span className="font-semibold text-green-800">{userStory.result}</span>
+              <p className="text-sm text-foreground font-medium whitespace-pre-wrap">
+                As a <span className="font-semibold text-secondary">{userStory.user}</span>, 
+                I want to <span className="font-semibold text-secondary">{userStory.action}</span>, 
+                so that <span className="font-semibold text-secondary">{userStory.result}</span>
               </p>
             </div>
           </div>
@@ -209,7 +209,7 @@ export const UserStoryCard = ({
               variant="ghost"
               size="sm"
               onClick={() => setIsEditOpen(true)}
-              className="text-green-600 hover:text-green-700 hover:bg-green-100 h-7 w-7 p-0"
+              className="text-secondary hover:text-secondary/80 hover:bg-secondary/10 h-7 w-7 p-0"
             >
               <Edit2 className="h-3 w-3" />
             </Button>
@@ -217,7 +217,7 @@ export const UserStoryCard = ({
               variant="ghost"
               size="sm"
               onClick={() => onDelete(userStory.id)}
-              className="text-red-600 hover:text-red-700 hover:bg-red-100 h-7 w-7 p-0"
+              className="text-destructive hover:text-destructive/80 hover:bg-destructive/10 h-7 w-7 p-0"
             >
               <Trash2 className="h-3 w-3" />
             </Button>
@@ -225,7 +225,7 @@ export const UserStoryCard = ({
               variant="ghost"
               size="sm"
               onClick={() => setIsExpanded(!isExpanded)}
-              className="text-green-600 hover:text-green-700 hover:bg-green-100 h-7 w-7 p-0"
+              className="text-secondary hover:text-secondary/80 hover:bg-secondary/10 h-7 w-7 p-0"
             >
               {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
             </Button>
@@ -236,12 +236,12 @@ export const UserStoryCard = ({
       {isExpanded && (
         <CardContent className="pt-0">
           <div className="flex items-center justify-between mb-3">
-            <h5 className="text-sm font-semibold text-green-900">Acceptance Criteria</h5>
+            <h5 className="text-sm font-semibold text-foreground">Acceptance Criteria</h5>
             <Button
               onClick={() => setIsAddCriteriaOpen(true)}
               size="sm"
               variant="outline"
-              className="border-green-300 text-green-600 hover:bg-green-100 h-7 text-xs px-2"
+              className="h-7 text-xs px-2"
             >
               <Plus className="h-3 w-3 mr-1" />
               Add AC
@@ -249,13 +249,13 @@ export const UserStoryCard = ({
           </div>
 
           {userStory.acceptanceCriteria.length === 0 ? (
-            <div className="text-center py-4 bg-white rounded border-2 border-dashed border-green-200">
-              <p className="text-green-600 text-xs mb-2">No acceptance criteria yet</p>
+            <div className="text-center py-4 bg-card rounded border-2 border-dashed border-border">
+              <p className="text-muted-foreground text-xs mb-2">No acceptance criteria yet</p>
               <Button
                 onClick={() => setIsAddCriteriaOpen(true)}
                 variant="outline"
                 size="sm"
-                className="border-green-300 text-green-600 hover:bg-green-100 h-7 text-xs px-2"
+                className="h-7 text-xs px-2"
               >
                 <Plus className="h-3 w-3 mr-1" />
                 Add Criteria

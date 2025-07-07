@@ -180,8 +180,8 @@ export const EpicCard = ({
 
   return (
     <Card 
-      className={`border border-purple-200 bg-purple-50 transition-all duration-200 ${
-        isDragOver ? 'ring-2 ring-purple-400 shadow-md' : ''
+      className={`border-primary/20 bg-primary/5 transition-all duration-200 ${
+        isDragOver ? 'ring-2 ring-primary/40 shadow-md' : ''
       }`}
       draggable
       onDragStart={handleDragStart}
@@ -193,12 +193,12 @@ export const EpicCard = ({
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-2 flex-1">
             <div className="cursor-grab active:cursor-grabbing flex-shrink-0 pt-1">
-              <GripVertical className="h-5 w-5 text-purple-400" />
+              <GripVertical className="h-5 w-5 text-primary/60" />
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
-                <CardTitle className="text-lg text-purple-900">{epic.title}</CardTitle>
-                <Badge variant="secondary" className="bg-purple-100 text-purple-800">
+                <CardTitle className="text-lg text-foreground">{epic.title}</CardTitle>
+                <Badge variant="secondary">
                   {epic.userStories.length} User Stor{epic.userStories.length !== 1 ? 'ies' : 'y'}
                 </Badge>
               </div>
@@ -209,7 +209,7 @@ export const EpicCard = ({
               variant="ghost"
               size="sm"
               onClick={() => setIsEditOpen(true)}
-              className="text-purple-600 hover:text-purple-700 hover:bg-purple-100"
+              className="text-primary hover:text-primary/80 hover:bg-primary/10"
             >
               <Edit2 className="h-4 w-4" />
             </Button>
@@ -217,7 +217,7 @@ export const EpicCard = ({
               variant="ghost"
               size="sm"
               onClick={() => onDelete(epic.id)}
-              className="text-red-600 hover:text-red-700 hover:bg-red-100"
+              className="text-destructive hover:text-destructive/80 hover:bg-destructive/10"
             >
               <Trash2 className="h-4 w-4" />
             </Button>
@@ -225,7 +225,7 @@ export const EpicCard = ({
               variant="ghost"
               size="sm"
               onClick={() => setIsExpanded(!isExpanded)}
-              className="text-purple-600 hover:text-purple-700 hover:bg-purple-100"
+              className="text-primary hover:text-primary/80 hover:bg-primary/10"
             >
               {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
             </Button>
@@ -236,12 +236,11 @@ export const EpicCard = ({
       {isExpanded && (
         <CardContent className="pt-0">
           <div className="flex items-center justify-between mb-4">
-            <h4 className="text-md font-semibold text-purple-900">User Stories</h4>
+            <h4 className="text-md font-semibold text-foreground">User Stories</h4>
             <Button
               onClick={() => setIsAddStoryOpen(true)}
               size="sm"
               variant="outline"
-              className="border-purple-300 text-purple-600 hover:bg-purple-100"
             >
               <Plus className="h-4 w-4 mr-2" />
               Add User Story
@@ -249,13 +248,12 @@ export const EpicCard = ({
           </div>
 
           {epic.userStories.length === 0 ? (
-            <div className="text-center py-6 bg-white rounded-lg border-2 border-dashed border-purple-200">
-              <p className="text-purple-600 mb-3">No user stories in this epic yet</p>
+            <div className="text-center py-6 bg-card rounded-lg border-2 border-dashed border-border">
+              <p className="text-muted-foreground mb-3">No user stories in this epic yet</p>
               <Button
                 onClick={() => setIsAddStoryOpen(true)}
                 variant="outline"
                 size="sm"
-                className="border-purple-300 text-purple-600 hover:bg-purple-100"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Add Your First User Story
