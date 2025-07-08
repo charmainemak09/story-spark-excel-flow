@@ -173,7 +173,7 @@ export const UserStoryCard = ({
 
   return (
     <Card 
-      className={`border-destructive/30 bg-destructive/10 transition-all duration-200 ${
+      className={`border-destructive/30 bg-card transition-all duration-200 ${
         isDragOver ? 'ring-2 ring-destructive/50 shadow-md' : ''
       }`}
       draggable

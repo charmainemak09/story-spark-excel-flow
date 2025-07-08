@@ -112,7 +112,7 @@ export const AcceptanceCriteriaCard = ({
 
   return (
     <Card 
-      className={`border-secondary/30 bg-secondary/10 transition-all duration-200 ${
+      className={`border-secondary/30 bg-card transition-all duration-200 ${
         isDragOver ? 'ring-2 ring-secondary/50 shadow-md' : ''
       }`}
       draggable
