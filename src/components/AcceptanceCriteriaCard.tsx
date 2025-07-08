@@ -112,8 +112,8 @@ export const AcceptanceCriteriaCard = ({
 
   return (
     <Card 
-      className={`border-accent/30 bg-accent/10 transition-all duration-200 ${
-        isDragOver ? 'ring-2 ring-accent/50 shadow-md' : ''
+      className={`border-secondary/30 bg-secondary/10 transition-all duration-200 ${
+        isDragOver ? 'ring-2 ring-secondary/50 shadow-md' : ''
       }`}
       draggable
       onDragStart={handleDragStart}
@@ -125,12 +125,12 @@ export const AcceptanceCriteriaCard = ({
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-2 flex-1">
             <div className="cursor-grab active:cursor-grabbing flex-shrink-0 pt-1">
-              <GripVertical className="h-3 w-3 text-accent/60" />
+              <GripVertical className="h-3 w-3 text-secondary/60" />
             </div>
             <div className="flex-1">
               <p className="text-xs text-foreground whitespace-pre-wrap">
                 <span className="font-semibold text-primary">Given</span> {criteria.given}, 
-                <span className="font-semibold text-destructive"> When</span> {criteria.when}, 
+                <span className="font-semibold text-accent"> When</span> {criteria.when}, 
                 <span className="font-semibold text-secondary"> Then</span> {criteria.then}
               </p>
             </div>
@@ -140,7 +140,7 @@ export const AcceptanceCriteriaCard = ({
               variant="ghost"
               size="sm"
               onClick={() => setIsEditOpen(true)}
-              className="text-muted-foreground hover:text-foreground hover:bg-accent/20 h-6 w-6 p-0"
+              className="text-muted-foreground hover:text-foreground hover:bg-secondary/20 h-6 w-6 p-0"
             >
               <Edit2 className="h-3 w-3" />
             </Button>

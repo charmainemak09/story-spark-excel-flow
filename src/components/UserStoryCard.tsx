@@ -173,8 +173,8 @@ export const UserStoryCard = ({
 
   return (
     <Card 
-      className={`border-secondary/30 bg-secondary/10 transition-all duration-200 ${
-        isDragOver ? 'ring-2 ring-secondary/50 shadow-md' : ''
+      className={`border-destructive/30 bg-destructive/10 transition-all duration-200 ${
+        isDragOver ? 'ring-2 ring-destructive/50 shadow-md' : ''
       }`}
       draggable
       onDragStart={handleDragStart}
@@ -186,7 +186,7 @@ export const UserStoryCard = ({
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-2 flex-1">
             <div className="cursor-grab active:cursor-grabbing flex-shrink-0 pt-1">
-              <GripVertical className="h-4 w-4 text-secondary/60" />
+              <GripVertical className="h-4 w-4 text-destructive/60" />
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
@@ -198,9 +198,9 @@ export const UserStoryCard = ({
                 </Badge>
               </div>
               <p className="text-sm text-foreground font-medium whitespace-pre-wrap">
-                As a <span className="font-semibold text-secondary">{userStory.user}</span>, 
-                I want to <span className="font-semibold text-secondary">{userStory.action}</span>, 
-                so that <span className="font-semibold text-secondary">{userStory.result}</span>
+                As a <span className="font-semibold text-destructive">{userStory.user}</span>, 
+                I want to <span className="font-semibold text-destructive">{userStory.action}</span>, 
+                so that <span className="font-semibold text-destructive">{userStory.result}</span>
               </p>
             </div>
           </div>
@@ -209,7 +209,7 @@ export const UserStoryCard = ({
               variant="ghost"
               size="sm"
               onClick={() => setIsEditOpen(true)}
-              className="text-secondary hover:text-secondary/80 hover:bg-secondary/10 h-7 w-7 p-0"
+              className="text-destructive hover:text-destructive/80 hover:bg-destructive/10 h-7 w-7 p-0"
             >
               <Edit2 className="h-3 w-3" />
             </Button>
@@ -225,7 +225,7 @@ export const UserStoryCard = ({
               variant="ghost"
               size="sm"
               onClick={() => setIsExpanded(!isExpanded)}
-              className="text-secondary hover:text-secondary/80 hover:bg-secondary/10 h-7 w-7 p-0"
+              className="text-destructive hover:text-destructive/80 hover:bg-destructive/10 h-7 w-7 p-0"
             >
               {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
             </Button>
