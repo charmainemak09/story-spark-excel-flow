@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: story-mapper
+    env: node
+    buildCommand: bun install && bun run build
+    startCommand: bunx serve dist --single --cors --listen 0.0.0.0:$PORT
+    envVars:
+      - key: NODE_ENV
+        value: production
