@@ -42,6 +42,8 @@ export const EpicCard = ({
   const [isAddStoryOpen, setIsAddStoryOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [dragPosition, setDragPosition] = useState<'above' | 'below' | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const { reorderUserStories } = useUserStoryReorder();
 
   const addUserStory = (user: string, action: string, result: string) => {
@@ -98,6 +100,12 @@ export const EpicCard = ({
     e.dataTransfer.setData('text/plain', epic.id);
     e.dataTransfer.setData('application/json', JSON.stringify({ type: 'epic', id: epic.id }));
     e.dataTransfer.effectAllowed = 'move';
+    setIsDragging(true);
+    
+    // Add visual feedback to drag image
+    if (e.currentTarget instanceof HTMLElement) {
+      e.currentTarget.style.opacity = '0.5';
+    }
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -111,12 +119,20 @@ export const EpicCard = ({
         if (parsedData.type === 'epic' || parsedData.type === 'user-story') {
           e.dataTransfer.dropEffect = 'move';
           setIsDragOver(true);
+          
+          // Determine drop position based on mouse position
+          const rect = e.currentTarget.getBoundingClientRect();
+          const midpoint = rect.top + rect.height / 2;
+          setDragPosition(e.clientY < midpoint ? 'above' : 'below');
         }
       }
     } catch {
       // Fallback for plain text data
       e.dataTransfer.dropEffect = 'move';
       setIsDragOver(true);
+      const rect = e.currentTarget.getBoundingClientRect();
+      const midpoint = rect.top + rect.height / 2;
+      setDragPosition(e.clientY < midpoint ? 'above' : 'below');
     }
   };
 
@@ -126,6 +142,18 @@ export const EpicCard = ({
     if (e.clientX < rect.left || e.clientX > rect.right || 
         e.clientY < rect.top || e.clientY > rect.bottom) {
       setIsDragOver(false);
+      setDragPosition(null);
+    }
+  };
+
+  const handleDragEnd = (e: React.DragEvent) => {
+    setIsDragging(false);
+    setIsDragOver(false);
+    setDragPosition(null);
+    
+    // Reset visual feedback
+    if (e.currentTarget instanceof HTMLElement) {
+      e.currentTarget.style.opacity = '1';
     }
   };
 
@@ -133,6 +161,7 @@ export const EpicCard = ({
     e.preventDefault();
     e.stopPropagation();
     setIsDragOver(false);
+    setDragPosition(null);
     
     const draggedId = e.dataTransfer.getData('text/plain');
     
@@ -179,16 +208,25 @@ export const EpicCard = ({
   };
 
   return (
-    <Card 
-      className={`border-primary/20 bg-primary/5 transition-all duration-200 ${
-        isDragOver ? 'ring-2 ring-primary/40 shadow-md' : ''
-      }`}
-      draggable
-      onDragStart={handleDragStart}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-    >
+    <div className="relative">
+      {/* Drop indicator above */}
+      {isDragOver && dragPosition === 'above' && (
+        <div className="absolute -top-1 left-0 right-0 h-0.5 bg-primary rounded-full shadow-lg z-10">
+          <div className="absolute left-2 -top-1 w-2 h-2 bg-primary rounded-full"></div>
+        </div>
+      )}
+      
+      <Card 
+        className={`border-primary/20 bg-primary/5 transition-all duration-200 ${
+          isDragOver ? 'ring-2 ring-primary/40 shadow-md scale-[1.02]' : ''
+        } ${isDragging ? 'opacity-50 shadow-2xl' : ''}`}
+        draggable
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
       <CardHeader className="pb-4">
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-2 flex-1">
@@ -292,5 +330,13 @@ export const EpicCard = ({
         onUpdate={updateEpic}
       />
     </Card>
+    
+    {/* Drop indicator below */}
+    {isDragOver && dragPosition === 'below' && (
+      <div className="absolute -bottom-1 left-0 right-0 h-0.5 bg-primary rounded-full shadow-lg z-10">
+        <div className="absolute left-2 -top-1 w-2 h-2 bg-primary rounded-full"></div>
+      </div>
+    )}
+  </div>
   );
 };

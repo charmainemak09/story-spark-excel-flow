@@ -34,6 +34,8 @@ export const UserStoryCard = ({
   const [isAddCriteriaOpen, setIsAddCriteriaOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [dragPosition, setDragPosition] = useState<'above' | 'below' | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const { reorderCriteria } = useAcceptanceCriteriaReorder();
 
   const addAcceptanceCriteria = (given: string, when: string, then: string) => {
@@ -91,6 +93,12 @@ export const UserStoryCard = ({
     e.dataTransfer.setData('text/plain', userStory.id);
     e.dataTransfer.setData('application/json', JSON.stringify({ type: 'user-story', id: userStory.id }));
     e.dataTransfer.effectAllowed = 'move';
+    setIsDragging(true);
+    
+    // Add visual feedback to drag image
+    if (e.currentTarget instanceof HTMLElement) {
+      e.currentTarget.style.opacity = '0.5';
+    }
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -104,12 +112,20 @@ export const UserStoryCard = ({
         if (parsedData.type === 'user-story' || parsedData.type === 'acceptance-criteria') {
           e.dataTransfer.dropEffect = 'move';
           setIsDragOver(true);
+          
+          // Determine drop position based on mouse position
+          const rect = e.currentTarget.getBoundingClientRect();
+          const midpoint = rect.top + rect.height / 2;
+          setDragPosition(e.clientY < midpoint ? 'above' : 'below');
         }
       }
     } catch {
       // Fallback for plain text data
       e.dataTransfer.dropEffect = 'move';
       setIsDragOver(true);
+      const rect = e.currentTarget.getBoundingClientRect();
+      const midpoint = rect.top + rect.height / 2;
+      setDragPosition(e.clientY < midpoint ? 'above' : 'below');
     }
   };
 
@@ -119,6 +135,18 @@ export const UserStoryCard = ({
     if (e.clientX < rect.left || e.clientX > rect.right || 
         e.clientY < rect.top || e.clientY > rect.bottom) {
       setIsDragOver(false);
+      setDragPosition(null);
+    }
+  };
+
+  const handleDragEnd = (e: React.DragEvent) => {
+    setIsDragging(false);
+    setIsDragOver(false);
+    setDragPosition(null);
+    
+    // Reset visual feedback
+    if (e.currentTarget instanceof HTMLElement) {
+      e.currentTarget.style.opacity = '1';
     }
   };
 
@@ -126,6 +154,7 @@ export const UserStoryCard = ({
     e.preventDefault();
     e.stopPropagation();
     setIsDragOver(false);
+    setDragPosition(null);
     
     const draggedId = e.dataTransfer.getData('text/plain');
     
@@ -172,16 +201,25 @@ export const UserStoryCard = ({
   };
 
   return (
-    <Card 
-      className={`border-destructive/30 bg-card transition-all duration-200 ${
-        isDragOver ? 'ring-2 ring-destructive/50 shadow-md' : ''
-      }`}
-      draggable
-      onDragStart={handleDragStart}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-    >
+    <div className="relative">
+      {/* Drop indicator above */}
+      {isDragOver && dragPosition === 'above' && (
+        <div className="absolute -top-1 left-0 right-0 h-0.5 bg-destructive rounded-full shadow-lg z-10">
+          <div className="absolute left-2 -top-1 w-2 h-2 bg-destructive rounded-full"></div>
+        </div>
+      )}
+      
+      <Card 
+        className={`border-destructive/30 bg-card transition-all duration-200 ${
+          isDragOver ? 'ring-2 ring-destructive/50 shadow-md scale-[1.02]' : ''
+        } ${isDragging ? 'opacity-50 shadow-xl' : ''}`}
+        draggable
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-2 flex-1">
@@ -292,5 +330,13 @@ export const UserStoryCard = ({
         onUpdate={updateUserStory}
       />
     </Card>
+    
+    {/* Drop indicator below */}
+    {isDragOver && dragPosition === 'below' && (
+      <div className="absolute -bottom-1 left-0 right-0 h-0.5 bg-destructive rounded-full shadow-lg z-10">
+        <div className="absolute left-2 -top-1 w-2 h-2 bg-destructive rounded-full"></div>
+      </div>
+    )}
+  </div>
   );
 };
