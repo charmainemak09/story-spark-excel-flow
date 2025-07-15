@@ -26,6 +26,9 @@ interface ThemeCardProps {
   onAddAcceptanceCriteria?: (userStoryId: string, given: string, when: string, then: string) => void;
   onUpdateAcceptanceCriteria?: (criteriaId: string, given: string, when: string, then: string) => void;
   onDeleteAcceptanceCriteria?: (criteriaId: string) => void;
+  onEpicReorder?: (draggedEpicId: string, targetEpicId: string) => void;
+  onUserStoryReorder?: (epicId: string, draggedStoryId: string, targetStoryId: string) => void;
+  onAcceptanceCriteriaReorder?: (userStoryId: string, draggedCriteriaId: string, targetCriteriaId: string) => void;
 }
 
 export const ThemeCard = ({ 
@@ -40,7 +43,10 @@ export const ThemeCard = ({
   onDeleteUserStory,
   onAddAcceptanceCriteria,
   onUpdateAcceptanceCriteria,
-  onDeleteAcceptanceCriteria
+  onDeleteAcceptanceCriteria,
+  onEpicReorder,
+  onUserStoryReorder,
+  onAcceptanceCriteriaReorder
 }: ThemeCardProps) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const [isAddEpicOpen, setIsAddEpicOpen] = useState(false);
@@ -100,6 +106,11 @@ export const ThemeCard = ({
   };
 
   const handleEpicReorder = (draggedEpicId: string, targetEpicId: string) => {
+    if (onEpicReorder) {
+      onEpicReorder(draggedEpicId, targetEpicId);
+      return;
+    }
+    
     const epics = [...theme.epics];
     const draggedIndex = epics.findIndex(e => e.id === draggedEpicId);
     const targetIndex = epics.findIndex(e => e.id === targetEpicId);

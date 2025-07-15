@@ -6,6 +6,9 @@ import { useThemes } from "@/hooks/useThemes";
 import { useEpics } from "@/hooks/useEpics";
 import { useUserStories } from "@/hooks/useUserStories";
 import { useAcceptanceCriteria } from "@/hooks/useAcceptanceCriteria";
+import { useEpicReorder } from "@/hooks/useEpicReorder";
+import { useUserStoryReorder } from "@/hooks/useUserStoryReorder";
+import { useAcceptanceCriteriaReorder } from "@/hooks/useAcceptanceCriteriaReorder";
 import { ThemeCard } from "@/components/ThemeCard";
 import { ExportButton } from "@/components/ExportButton";
 import { format } from "date-fns";
@@ -17,6 +20,9 @@ const ThemeDetail = () => {
   const { createEpic, updateEpic, deleteEpic } = useEpics();
   const { createUserStory, updateUserStory, deleteUserStory } = useUserStories();
   const { createAcceptanceCriteria, updateAcceptanceCriteria, deleteAcceptanceCriteria } = useAcceptanceCriteria();
+  const { reorderEpics } = useEpicReorder();
+  const { reorderUserStories } = useUserStoryReorder();
+  const { reorderCriteria } = useAcceptanceCriteriaReorder();
   
   const theme = themes.find(t => t.id === themeId);
 
@@ -108,6 +114,59 @@ const ThemeDetail = () => {
     }
   };
 
+  const handleEpicReorder = (draggedEpicId: string, targetEpicId: string) => {
+    if (!themeId) return;
+    const epics = theme?.epics || [];
+    const epicIds = [...epics];
+    const draggedIndex = epicIds.findIndex(e => e.id === draggedEpicId);
+    const targetIndex = epicIds.findIndex(e => e.id === targetEpicId);
+    
+    if (draggedIndex !== -1 && targetIndex !== -1) {
+      const [draggedEpic] = epicIds.splice(draggedIndex, 1);
+      epicIds.splice(targetIndex, 0, draggedEpic);
+      
+      const reorderedIds = epicIds.map(epic => epic.id);
+      reorderEpics({ themeId, epicIds: reorderedIds });
+    }
+  };
+
+  const handleUserStoryReorder = (epicId: string, draggedStoryId: string, targetStoryId: string) => {
+    const epic = theme?.epics.find(e => e.id === epicId);
+    if (!epic) return;
+    
+    const stories = [...epic.userStories];
+    const draggedIndex = stories.findIndex(s => s.id === draggedStoryId);
+    const targetIndex = stories.findIndex(s => s.id === targetStoryId);
+    
+    if (draggedIndex !== -1 && targetIndex !== -1) {
+      const [draggedStory] = stories.splice(draggedIndex, 1);
+      stories.splice(targetIndex, 0, draggedStory);
+      
+      const storyIds = stories.map(story => story.id);
+      reorderUserStories({ epicId, storyIds });
+    }
+  };
+
+  const handleAcceptanceCriteriaReorder = (userStoryId: string, draggedCriteriaId: string, targetCriteriaId: string) => {
+    const userStory = theme?.epics
+      .flatMap(epic => epic.userStories)
+      .find(story => story.id === userStoryId);
+    
+    if (!userStory) return;
+    
+    const criteria = [...userStory.acceptanceCriteria];
+    const draggedIndex = criteria.findIndex(c => c.id === draggedCriteriaId);
+    const targetIndex = criteria.findIndex(c => c.id === targetCriteriaId);
+    
+    if (draggedIndex !== -1 && targetIndex !== -1) {
+      const [draggedCriteria] = criteria.splice(draggedIndex, 1);
+      criteria.splice(targetIndex, 0, draggedCriteria);
+      
+      const criteriaIds = criteria.map(c => c.id);
+      reorderCriteria({ userStoryId, criteriaIds });
+    }
+  };
+
   return (
     <AuthenticatedLayout>
       <div className="container mx-auto px-4 py-8">
@@ -156,6 +215,9 @@ const ThemeDetail = () => {
           onAddAcceptanceCriteria={handleAddAcceptanceCriteria}
           onUpdateAcceptanceCriteria={handleUpdateAcceptanceCriteria}
           onDeleteAcceptanceCriteria={handleDeleteAcceptanceCriteria}
+          onEpicReorder={handleEpicReorder}
+          onUserStoryReorder={handleUserStoryReorder}
+          onAcceptanceCriteriaReorder={handleAcceptanceCriteriaReorder}
         />
       </div>
     </AuthenticatedLayout>
